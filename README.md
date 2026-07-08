@@ -38,7 +38,7 @@
 ### 3. 調整罩子系統 ([HoodSubsystem.java](file:///c:/JAVA/MYMK5N/src/main/java/frc/robot/subsystems/HoodSubsystem.java))
 * **馬達配置**: 1 顆 TalonFX 馬達。
 * **控制模式**: 利用 `MotionMagicVoltage` (運動魔法) 控制角度，設定平滑的加速度和巡航速度。
-* **特色**: 內置角度安全限制 (`khoodMinAngle`: 0.0 度 ~ `khoodMaxAngle`: 22.5 度)，避免機構超出物理極限。
+* **特色**: 內置角度安全限制 (`khoodMinAngle`: 0.0 度 ~ `khoodMaxAngle`: 45.0 度，直驅無齒輪箱)，避免機構超出物理極限。
 
 ### 4. 伸縮進氣子系統 ([IntakeSubsystem.java](file:///c:/JAVA/MYMK5N/src/main/java/frc/robot/subsystems/IntakeSubsystem.java))
 * **類型**: 齒條伸縮機構 (Rack and Pinion)

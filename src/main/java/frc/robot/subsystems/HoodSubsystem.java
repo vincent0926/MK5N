@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.HoodConstants;
 
@@ -42,6 +43,15 @@ public class HoodSubsystem extends SubsystemBase {
         hoodMotor.setPosition(0.0);
         targetAngleDeg = 0.0;
     }
+
+    @Override
+    public void periodic() {
+        SmartDashboard.putNumber("Hood Target Angle", getTargetAngle());
+        SmartDashboard.putNumber("Hood Actual Angle", getAngle());
+        SmartDashboard.putNumber("Hood Motor Rotations", hoodMotor.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("Hood Stator Current", hoodMotor.getStatorCurrent().getValueAsDouble());
+    }
+
 
     /** 設定 Hood 角度（單位：度） */
     public void setAngle(double angleDeg) {

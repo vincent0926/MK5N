@@ -99,15 +99,15 @@ public final class Constants {
   public static final class HoodConstants {
     public static final int khoodId = 15;
 
-    // 這裡調高 PID 參數，讓馬達有力氣對抗重力
-    public static final double khoodkP = 5.0;
+    // 這裡調高 PID 參數，讓馬達有力氣對抗重力（直驅無齒輪箱改用 180.0）
+    public static final double khoodkP = 180.0;
     public static final double khoodkI = 0.0;
     public static final double khoodkD = 0.0;
 
     public static final double khoodMinAngle = 0.0;
-    public static final double khoodMaxAngle = 22.5;
+    public static final double khoodMaxAngle = 45.0;
 
-    public static final double kOneMotor = 0.1;
+    public static final double kOneMotor = 1.0 / 360.0;
 
     public static final double kHoodSupplyCurrentLimit = 40;
     public static final boolean kHoodSupplyCurrentLimitEnable = true;
