@@ -1,5 +1,5 @@
 # FRC 9427 Robot Project (MYMK5N)
-
+123
 本專案是 **FRC Team 9427** 的機器人控制程式，基於 WPILib 的 **Command-based** 架構開發，採用 Java 語言編寫，並專為 2026 賽季進行配置。
 
 ## 🤖 專案概述 (Project Overview)
