@@ -12,8 +12,20 @@ import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.RollerIntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.VisionSubsystem;
 
 import java.util.concurrent.ForkJoinPool;
+import java.util.List;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import frc.robot.commands.Blue1Auto;
+import frc.robot.commands.Blue2Auto;
+import frc.robot.commands.Blue3Auto;
+
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -22,6 +34,10 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+/**
+ * RobotContainer 類別是機器人主要架構所在之處。
+ * 包含子系統、操作搖桿以及各種按鈕觸發的指令綁定。
+ */
 public class RobotContainer {
 
         private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
@@ -31,13 +47,65 @@ public class RobotContainer {
         private final HoodSubsystem hoodSubsystem = new HoodSubsystem();
         private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
         private final RollerIntakeSubsystem rollerIntakeSubsystem = new RollerIntakeSubsystem();
+        private final VisionSubsystem visionSubsystem = new VisionSubsystem();
+        private final SendableChooser<Command> autoChooser;
 
         public RobotContainer() {
+                // 註冊 PathPlanner Named Commands (必須在 AutoChooser 建立之前註冊)
+                NamedCommands.registerCommand("ShootAndIndex", 
+                        Commands.sequence(
+                                Commands.runOnce(() -> shooterSubsystem.runshooter(), shooterSubsystem),
+                                Commands.waitSeconds(0.5), // 等待摩擦輪加速
+                                Commands.runOnce(() -> indexerSubsystem.runindexer(), indexerSubsystem),
+                                Commands.waitSeconds(0.5), // 等待球射出
+                                Commands.runOnce(() -> {
+                                        shooterSubsystem.stop();
+                                        indexerSubsystem.stop();
+                                }, shooterSubsystem, indexerSubsystem)
+                        ) 
+                );
+
+                NamedCommands.registerCommand("IntakeExtend", Commands.runOnce(() -> intakeSubsystem.extend(), intakeSubsystem));
+                NamedCommands.registerCommand("IntakeRetract", Commands.runOnce(() -> intakeSubsystem.retract(), intakeSubsystem));
+                NamedCommands.registerCommand("StartRoller", Commands.runOnce(() -> rollerIntakeSubsystem.runRollers(), rollerIntakeSubsystem));
+                NamedCommands.registerCommand("StopRoller", Commands.runOnce(() -> rollerIntakeSubsystem.stop(), rollerIntakeSubsystem));
+
+                // 自訂 Auto Chooser 顯示藍紅方選項
+                autoChooser = new SendableChooser<>();
+
+                // 註冊藍方選項（Blue1 使用 Java Command 精確控制時序）
+                autoChooser.setDefaultOption("Blue 1", new Blue1Auto(
+                                driveSubsystem, intakeSubsystem, rollerIntakeSubsystem,
+                                shooterSubsystem, indexerSubsystem,
+                                hoodSubsystem, visionSubsystem));
+                autoChooser.addOption("Blue 2", new Blue2Auto(
+                                driveSubsystem, intakeSubsystem, rollerIntakeSubsystem,
+                                shooterSubsystem, indexerSubsystem, hoodSubsystem));
+                autoChooser.addOption("Blue 3", new Blue3Auto(
+                                driveSubsystem, intakeSubsystem, rollerIntakeSubsystem,
+                                shooterSubsystem, indexerSubsystem, hoodSubsystem));
+
+                // 註冊紅方選項（Blue1 同步使用 Java Command，路徑與里程計自動鏡像）
+                autoChooser.addOption("Red 1", new Blue1Auto(
+                                driveSubsystem, intakeSubsystem, rollerIntakeSubsystem,
+                                shooterSubsystem, indexerSubsystem,
+                                hoodSubsystem, visionSubsystem));
+                autoChooser.addOption("Red 2", new Blue2Auto(
+                                driveSubsystem, intakeSubsystem, rollerIntakeSubsystem,
+                                shooterSubsystem, indexerSubsystem, hoodSubsystem));
+                autoChooser.addOption("Red 3", new Blue3Auto(
+                                driveSubsystem, intakeSubsystem, rollerIntakeSubsystem,
+                                shooterSubsystem, indexerSubsystem, hoodSubsystem));
+
+                SmartDashboard.putData("Auto Mode", autoChooser);
+
+                // 設定底盤預設指令 (搖桿控制)
                 driveSubsystem.setDefaultCommand(
                                 driveSubsystem.run(() -> {
                                         // 1. 處理移動 (左搖桿)
-                                        double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.1);
-                                        double x = MathUtil.applyDeadband(-driverController.getLeftX(), 0.1);
+                                        // 這裡將原本的 y 和 x 加上負號 (反轉)，讓 Shooter 變成車頭
+                                        double y = -MathUtil.applyDeadband(driverController.getLeftY(), 0.1);
+                                        double x = -MathUtil.applyDeadband(driverController.getLeftX(), 0.1);
 
                                         // 2. 處理旋轉 (扳機鍵：右扳機 - 左扳機)
                                         // 假設：按下右扳機 -> 右轉，按下左扳機 -> 左轉
@@ -62,43 +130,63 @@ public class RobotContainer {
 
         private void configureBindings() {
 
-                // shooterSubsystem
+                // 綁定 A 鍵：全自動瞄準與發射 (按一下啟動，再按一下停止)
+                // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷 A 鍵指令
                 driverController.a().toggleOnTrue(
-                                edu.wpi.first.wpilibj2.command.Commands.startEnd(
-                                                () -> shooterSubsystem.runshooter(),
-                                                () -> shooterSubsystem.stop(),
-                                                shooterSubsystem));
+                                new frc.robot.commands.AutoAimAndShoot(
+                                                visionSubsystem, hoodSubsystem, shooterSubsystem, indexerSubsystem,
+                                                driveSubsystem)
+                                .until(() -> 
+                                        Math.abs(driverController.getLeftY()) > 0.1 || 
+                                        Math.abs(driverController.getLeftX()) > 0.1 || 
+                                        Math.abs(driverController.getLeftTriggerAxis()) > 0.1 || 
+                                        Math.abs(driverController.getRightTriggerAxis()) > 0.1
+                                )
+                );
 
-                // rollerIntakeSubsystem
+                // 綁定 Y 鍵：啟動/停止滾輪進件機構 (Roller Intake)
                 driverController.y().toggleOnTrue(
                                 edu.wpi.first.wpilibj2.command.Commands.startEnd(
                                                 () -> rollerIntakeSubsystem.runRollers(),
                                                 () -> rollerIntakeSubsystem.stop(),
                                                 rollerIntakeSubsystem));
 
-                // indexer
+                // 綁定 X 鍵：啟動/停止輸彈機構 (Indexer)
                 driverController.x().toggleOnTrue(
                                 edu.wpi.first.wpilibj2.command.Commands.startEnd(
                                                 () -> indexerSubsystem.runindexer(),
                                                 () -> indexerSubsystem.stop(),
                                                 indexerSubsystem));
 
-                // 歸0
+                // 綁定左保險桿 (Left Bumper)：進件機構 (Intake)、仰角機構 (Hood) 和陀螺儀歸零
                 driverController.leftBumper().onTrue(
-                                edu.wpi.first.wpilibj2.command.Commands.runOnce(
-                                                driveSubsystem::resetpigeonOdometry, driveSubsystem));
+                                edu.wpi.first.wpilibj2.command.Commands.runOnce(() -> {
+                                        driveSubsystem.resetpigeonOdometry();
+                                        intakeSubsystem.retract();
+                                        hoodSubsystem.setAngle(0.0);
+                                }, driveSubsystem, intakeSubsystem, hoodSubsystem));
 
-                // intakeSubsystem
+                // 綁定右保險桿 (Right Bumper)：切換進件機構 (Intake) 伸出/收回狀態
                 driverController.rightBumper().onTrue(
                                 new InstantCommand(
                                                 () -> intakeSubsystem.togglePosition(),
                                                 intakeSubsystem));
 
-                // 1. 預設命令：永遠鎖死目標角度
-                hoodSubsystem.setDefaultCommand(
-                                edu.wpi.first.wpilibj2.command.Commands.run(
-                                                () -> hoodSubsystem.setAngle(hoodSubsystem.getTargetAngle()),
-                                                hoodSubsystem));
+                // 綁定 B 鍵：射出機構 (Shooter) - 單純啟動/停止摩擦輪
+                driverController.b().toggleOnTrue(
+                                edu.wpi.first.wpilibj2.command.Commands.startEnd(
+                                                () -> shooterSubsystem.runshooter(),
+                                                () -> shooterSubsystem.stop(),
+                                                shooterSubsystem));
+
+                // 設定仰角對應表
+                edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap distanceToAngleMap = new edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap();
+                for (double[] point : frc.robot.Constants.AimConstants.kDistanceToAngleMap) {
+                        distanceToAngleMap.put(point[0], point[1]);
+                }
+
+                // 1. 移除了原本的預設自動追蹤指令
+                // 現在仰角「平常不會動」，只有在按下 A 鍵啟動 AutoAimAndShoot 時才會去讀取並設定仰角。
 
                 // 2. 上下鍵：單次移動 1 度
                 driverController.povUp().onTrue(
@@ -110,10 +198,41 @@ public class RobotContainer {
 
                 // 3. 左右鍵：持續移動 (按住時每 20ms 移動 0.5 度)
                 driverController.povRight().whileTrue(
-                                Commands.run(() -> hoodSubsystem.addAngle(0.1), hoodSubsystem));
+                                Commands.run(() -> hoodSubsystem.addAngle(0.5), hoodSubsystem));
 
                 driverController.povLeft().whileTrue(
-                                Commands.run(() -> hoodSubsystem.addAngle(-0.1), hoodSubsystem));
+                                Commands.run(() -> hoodSubsystem.addAngle(-0.5), hoodSubsystem));
         }
 
+        /**
+         * 獲取所選擇的自動模式指令。
+         *
+         * @return 將在自動模式中執行的指令。
+         */
+        public Command getAutonomousCommand() {
+                return autoChooser.getSelected();
+        }
+
+        /**
+         * 這個方法將會被 Robot.java 的 robotPeriodic() 呼叫。
+         * 確保無論在手動還是自動模式 (Auto 執行時)，全場視覺定位都會持續在背景更新。
+         */
+        public void periodic() {
+                // 同步陀螺儀角度給 Limelight，啟用 MegaTag 2 定位
+                visionSubsystem.updateMegaTag2(
+                        driveSubsystem.getHeading(),
+                        driveSubsystem.getYawRate());
+
+                List<VisionSubsystem.EstimatedRobotPose> poses = visionSubsystem.getEstimatedPoses();
+                for (VisionSubsystem.EstimatedRobotPose p : poses) {
+                        driveSubsystem.addVisionMeasurement(p.estimatedPose, p.timestampSeconds);
+                }
+        }
+
+        /**
+         * 讓 Robot.java 可以在自動/手動模式初始時強制收回 Intake
+         */
+        public void retractIntake() {
+                intakeSubsystem.retract();
+        }
 }

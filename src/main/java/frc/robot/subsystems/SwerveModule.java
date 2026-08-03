@@ -12,10 +12,17 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 import frc.robot.Constants.SwerveConstants;
 
+/**
+ * 負責單一獨立 Swerve 模組（包含驅動馬達、轉向馬達與絕對值編碼器）的控制與狀態讀取。
+ */
 public class SwerveModule {
+    /** 模組的編號（通常為 0-3 代表四個輪子） */
     private final int ModuleIndex;
+    /** 負責控制輪子前進後退的驅動馬達 */
     private final TalonFX DriveMotor;
+    /** 負責控制輪子轉向的轉向馬達 */
     private final TalonFX SteerMotor;
+    /** 用於讀取輪子絕對角度的 CANcoder 絕對值編碼器 */
     private final CANcoder AbsoluteEncoder;
 
     // 建立驅動馬達的控制指令物件：使用「速度與電壓」閉迴路控制 (預設目標為 0)
@@ -26,6 +33,16 @@ public class SwerveModule {
     // 紀錄最後一次的目標角度，避免機器人靜止時，搖桿回正導致輪子自動轉回 0 度而產生抖動
     private Rotation2d mLastAngle;
 
+    /**
+     * 建立一個新的 Swerve 模組。
+     *
+     * @param index           模組編號
+     * @param driveId         驅動馬達的 CAN ID
+     * @param steerId         轉向馬達的 CAN ID
+     * @param encoderId       絕對值編碼器的 CAN ID
+     * @param offsetRotations 絕對角度偏移量 (以圈數為單位)
+     * @param driveInverted   驅動馬達是否反轉
+     */
     public SwerveModule(int index, int driveId, int steerId, int encoderId, double offsetRotations, InvertedValue driveInverted) {
 
         // 將傳入的模組編號存入類別變數
@@ -43,6 +60,12 @@ public class SwerveModule {
 
     }
 
+    /**
+     * 設定模組的目標狀態 (包含期望速度與期望角度)。
+     * 包含防抖動設計以及 Swerve 轉向優化處理。
+     *
+     * @param desiredState 期望的 Swerve 模組狀態
+     */
     public void setDesiredState(SwerveModuleState desiredState) {
 
         // --- 防抖動設計 (Anti-Jitter / Deadband) ---
@@ -82,6 +105,8 @@ public class SwerveModule {
     /**
      * 獲取模組目前的「位置資訊」 (Odometry 哩程計專用)
      * 用來告訴系統：這顆輪子總共往前滾了多遠？現在指著什麼方向？
+     * 
+     * @return 模組的位置狀態
      */
     public SwerveModulePosition getPosition() {
         // 讀取驅動馬達總共轉了幾圈，乘上輪胎圓周長，算出實際在地毯上行駛了幾公尺
@@ -95,6 +120,8 @@ public class SwerveModule {
     /**
      * 獲取模組目前的「狀態資訊」 (Kinematics 運動學專用)
      * 用來告訴系統：這顆輪子現在當下的「瞬時速度」是多少？指著什麼方向？
+     * 
+     * @return 模組的運動狀態
      */
     public SwerveModuleState getState() {
         // 讀取驅動馬達當前的轉速 (RPS)，乘上輪胎圓周長，算出目前的瞬時速度 (公尺/秒)

@@ -11,8 +11,21 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants.SwerveConstants;
 
+/**
+ * 負責單一 Swerve 模組中各個硬體（驅動馬達、轉向馬達、絕對值編碼器）的初始化設定。
+ */
 public class SwerveModuleConfigurator {
 
+  /**
+   * 設定給定的馬達與編碼器參數，套用 PID、電流限制、與轉向偏移等設定。
+   *
+   * @param driveMotor           驅動馬達
+   * @param steerMotor           轉向馬達
+   * @param encoder              絕對值編碼器
+   * @param steerOffsetRotations 轉向編碼器的偏移量（圈數）
+   * @param driveInverted        驅動馬達的旋轉方向設定
+   * @return 設定完成後回傳 true
+   */
   public static boolean configure(
       TalonFX driveMotor,
       TalonFX steerMotor,
@@ -21,23 +34,25 @@ public class SwerveModuleConfigurator {
       InvertedValue driveInverted) {
     // CANcoder 絕對值編碼器設定
     var coderConfig = new CANcoderConfiguration();
-    // 設定磁感測器的讀值方向：逆時針旋轉時讀數為正向增加
+   
+    // 設定感測器方向：逆時針為正
     coderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-    // 設定磁感測器的讀值方向：逆時針旋轉時讀數為正向增加
+   
+    // 設定磁性偏移量
     coderConfig.MagnetSensor.MagnetOffset = steerOffsetRotations;
-    // 編碼器設定將會寫入硬體
+    
+    // 將設定套用到編碼器
     encoder.getConfigurator().apply(coderConfig);
 
     // Drive Motor 驅動馬達設定
     var driveConfig = new TalonFXConfiguration();
     
-    driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    driveConfig.MotorOutput.Inverted = driveInverted;
     // 設定馬達停止時為煞車模式 (Brake)，防止機器人在靜止時滑動
+    driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    // 設定驅動馬達是否反轉
+    driveConfig.MotorOutput.Inverted = driveInverted;
    
-    // 設定馬達的旋轉正方向：逆時針為正
-    //driveConfig.MotorOutput.Inverted= InvertedValue.Clockwise_Positive;
-
+    // 設定驅動馬達的 PIDF 參數
     driveConfig.Slot0.kP = SwerveConstants.kDrivekP;
     driveConfig.Slot0.kI = SwerveConstants.kDrivekI;
     driveConfig.Slot0.kD = SwerveConstants.kDrivekD;
@@ -57,17 +72,22 @@ public class SwerveModuleConfigurator {
     driveConfig.CurrentLimits.StatorCurrentLimit = 60;
     driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
+    // 設定驅動機構的齒輪比
     driveConfig.Feedback.SensorToMechanismRatio = SwerveConstants.kDriveGearRatio;
 
     // Steer Motor 轉向馬達設定
     var steerConfig = new TalonFXConfiguration();
+    // 設定停止時為煞車模式
     steerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    // 設定轉向馬達方向，逆時針為正
     steerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
+    // 設定轉向馬達的 PID 參數
     steerConfig.Slot0.kP = SwerveConstants.kSteerkP;
     steerConfig.Slot0.kI = SwerveConstants.kSteerkI;
     steerConfig.Slot0.kD = SwerveConstants.kSteerkD;
 
+    // 設定轉向馬達的電源端電流限制
     steerConfig.CurrentLimits.SupplyCurrentLimit = SwerveConstants.kSteerSupplyCurrentLimit;
     steerConfig.CurrentLimits.SupplyCurrentLimitEnable = SwerveConstants.kSteerSupplyCurrentLimitEnable;
 
@@ -86,6 +106,7 @@ public class SwerveModuleConfigurator {
     driveMotor.getConfigurator().apply(driveConfig);
     steerMotor.getConfigurator().apply(steerConfig);
 
+    // 延遲一小段時間確保設定生效
     Timer.delay(0.05);
 
     // 模組設定程序執行完畢，回傳 true 代表流程走完
