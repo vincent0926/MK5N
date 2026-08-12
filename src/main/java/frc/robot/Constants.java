@@ -84,11 +84,11 @@ public final class Constants {
     public static final int kRTShooterId = 11;
     public static final int kRDShooterId = 12;
 
-    public static final double kShooterkP = 0.05;
+    public static final double kShooterkP = 0.07;
     public static final double kShooterkI = 0.0;
     public static final double kShooterkD = 0;
-    public static final double kShooterkS = 0.45;
-    public static final double kShooterkV = 0.12;
+    public static final double kShooterkS = 0.6;
+    public static final double kShooterkV = 0.2;
     public static final double kShooterkA = 0;
 
     public static final double kshooterVelocityVoltage = 30.0;
@@ -99,12 +99,11 @@ public final class Constants {
     public static final boolean kShooterSupplyCurrentLimitEnable = true;
 
   }
+
   // 仰角機構 (Hood) 參數
   public static final class HoodConstants {
     public static final int khoodId = 15;
 
-    // 這裡調高 PID 參數，讓馬達有力氣對抗重力（直驅無齒輪箱改用 180.0）
-    // 更新：因馬達震盪發熱，將 kP 暫時降至 50.0
     public static final double khoodkP = 70.0;
     public static final double khoodkI = 0.0;
     public static final double khoodkD = 0.0;
@@ -114,7 +113,7 @@ public final class Constants {
     public static final double khoodMinAngle = 0.0;
     public static final double khoodMaxAngle = 45.0;
 
-    public static final double kOneMotor = 10.0/360.0;
+    public static final double kOneMotor = 10.0 / 360.0;
 
     public static final double kHoodSupplyCurrentLimit = 40;
     public static final boolean kHoodSupplyCurrentLimitEnable = true;
@@ -124,7 +123,7 @@ public final class Constants {
   public static class IndexerConstants {
 
     public static final int kindexerId = 0;
-    public static final double kindexerVoltage = 4.0;
+    public static final double kindexerVoltage = 7.5;
     public static final double kIndexerSupplyCurrentLimit = 40.0;// 電流限制
     public static final boolean kIndexerSupplyCurrentLimitEnable = true;// 打開電流限制
   }
@@ -134,7 +133,7 @@ public final class Constants {
 
     public static final int kuorbitId = 14;
     public static final int kdorbitId = 13;
-    public static final double korbitVoltage = 4.0;
+    public static final double korbitVoltage = 7.5;
     public static final double kOrbitSupplyCurrentLimit = 40.0;// 電流限制
     public static final boolean kOrbitSupplyCurrentLimitEnable = true;// 打開電流限制
 
@@ -151,10 +150,10 @@ public final class Constants {
         * (kintakePitChcircleDiameter * Math.PI);// 齒比*節圓值周長
     public static final double kRotationsPerMeter = 1.0 / kintakeMetersPerRotorRotation;// 齒條走 1 公尺，馬達要轉幾圈
 
-    public static final double kintakein = 0.1;// 收0cm
+    public static final double kintakein = 0.0;// 收0cm
     public static final double kintakeout = 0.38;// 伸長30cm
 
-    public static final double kintakekP = 0.6;
+    public static final double kintakekP = 0.8;
     public static final double kintakekI = 0.0;
     public static final double kintakekD = 0.0;
     public static final double kintakeks = 0.07;
@@ -183,23 +182,23 @@ public final class Constants {
   }
 
   public static class AimConstants {
-    
-     // 預設的仰角增加度數 (補償值，可依需求調整)
+
+    // 預設的仰角增加度數 (補償值，可依需求調整)
     public static final double kElevationOffset = 0.0;
     // 距離 (公尺) 對應 仰角 (度)
     public static final double[][] kDistanceToAngleMap = {
-        {1.0, 5.0},
-        {2.0, 15.0},
-        {3.0, 25.0},
-        {4.0, 35.0}
+        { 1.0, 2.0 },
+        { 2.0, 7.0 },
+        { 3.0, 10.0 },
+        { 4.0, 20.0 }
     };
 
     // 距離 (公尺) 對應 轉速 (RPS, TalonFX 單位)
     public static final double[][] kDistanceToRPSMap = {
-        {1.0, 40.0},
-        {2.0, 50.0},
-        {3.0, 60.0},
-        {4.0, 70.0}
+        { 1.0, 18.0 },
+        { 2.0, 20.0 },
+        { 3.0, 30.0 },
+        { 4.0, 40.0 }
     };
   }
 

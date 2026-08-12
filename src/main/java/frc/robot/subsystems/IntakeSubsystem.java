@@ -24,6 +24,9 @@ public class IntakeSubsystem extends SubsystemBase {
     // 起始位置為機器內（收回），預設狀態設為 false
     private boolean isOut = false;
 
+    /** 目前的目標位置 (rotations)，由 periodic() 持續送出 */
+    private double targetRotations = 0.0;
+
     /**
      * 進件子系統建構子
      * 初始化馬達設定、PID 參數及電流限制。
@@ -41,7 +44,7 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeConfig.CurrentLimits.SupplyCurrentLimitEnable = IntakeConstants.kintakeSupplyCurrentLimitEnable;
         intakeConfig.CurrentLimits.StatorCurrentLimit = 60; // 轉子電流防護
         intakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-
+        intakeConfig.MotorOutput.Inverted = com.ctre.phoenix6.signals.InvertedValue.Clockwise_Positive;
         intakeConfig.Feedback.SensorToMechanismRatio = 1.0;
 
         intakeMotor.getConfigurator().apply(intakeConfig);
@@ -50,6 +53,7 @@ public class IntakeSubsystem extends SubsystemBase {
         double initialRotations = IntakeConstants.kintakein * IntakeConstants.kRotationsPerMeter;
 
         intakeMotor.setPosition(initialRotations);
+        targetRotations = initialRotations;
     }
 
 
@@ -59,10 +63,9 @@ public class IntakeSubsystem extends SubsystemBase {
      * @param targetMeters 目標位置（單位：公尺）
      */
     public void setIntakePositionVoltage(double targetMeters) {    
+        System.out.println("[IntakeSubsystem] setIntakePositionVoltage() called! Target meters=" + targetMeters);
         // 將公尺換算為馬達目標圈數
-        double targetRotations = targetMeters * IntakeConstants.kRotationsPerMeter;
-        // 執行 PID 位置控制
-        intakeMotor.setControl(intakePositionVoltage.withPosition(targetRotations));
+        targetRotations = targetMeters * IntakeConstants.kRotationsPerMeter;
     }
 
     /**
@@ -94,6 +97,7 @@ public class IntakeSubsystem extends SubsystemBase {
      * 不依賴 isOut 旗標，直接下達伸出位置指令
      */
     public void extend() {
+        System.out.println("[IntakeSubsystem] extend() called!");
         setIntakePositionVoltage(IntakeConstants.kintakeout);
         isOut = true;
     }
@@ -102,19 +106,16 @@ public class IntakeSubsystem extends SubsystemBase {
      * 明確收回 Intake（供自動階段 Named Command 使用）
      * 不依賴 isOut 旗標，直接下達收回位置指令
      */
+    public boolean isConnected() { return intakeMotor.isConnected(); }
+
+    /**
+     * 不依賴 isOut 旗標，直接下達收回位置指令
+     */
     public void retract() {
+        System.out.println("[IntakeSubsystem] retract() called!");
         setIntakePositionVoltage(IntakeConstants.kintakein);
         isOut = false;
     }
-
-
-    // @Override
-    // public void periodic() {
-    //     SmartDashboard.putNumber("Intake/目前的馬達圈數", intakeMotor.getPosition().getValueAsDouble());
-    //     SmartDashboard.putNumber("Intake/目前的位置(公尺)",
-    //             intakeMotor.getPosition().getValueAsDouble() / IntakeConstants.kRotationsPerMeter);
-    //     SmartDashboard.putBoolean("Intake/位置是否在外部", isOut);
-    // }
 
     /**
      * 週期性更新函式
@@ -122,7 +123,10 @@ public class IntakeSubsystem extends SubsystemBase {
      */
     @Override
     public void periodic() {
-        // 每 20ms 將 Intake 狀態推送到 SmartDashboard，Elastic 可即時顯示
+        // 每 20ms 持續送出位置控制指令，避免 Phoenix 6 Motor Safety 超時
+        intakeMotor.setControl(intakePositionVoltage.withPosition(targetRotations));
+
+        // 將 Intake 狀態推送到 SmartDashboard
         SmartDashboard.putBoolean("Intake/伸出中", isOut);
         SmartDashboard.putString("Intake/狀態", isOut ? "✅ 伸出" : "🔴 收回");
         SmartDashboard.putNumber("Intake/位置(公尺)",
