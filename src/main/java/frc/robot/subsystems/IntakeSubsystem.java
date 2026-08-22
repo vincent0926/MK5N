@@ -42,7 +42,7 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         intakeConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.kintakeSupplyCurrentLimit;
         intakeConfig.CurrentLimits.SupplyCurrentLimitEnable = IntakeConstants.kintakeSupplyCurrentLimitEnable;
-        intakeConfig.CurrentLimits.StatorCurrentLimit = 60; // 轉子電流防護
+        intakeConfig.CurrentLimits.StatorCurrentLimit = 30; // 轉子電流防護
         intakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         intakeConfig.MotorOutput.Inverted = com.ctre.phoenix6.signals.InvertedValue.Clockwise_Positive;
         intakeConfig.Feedback.SensorToMechanismRatio = 1.0;

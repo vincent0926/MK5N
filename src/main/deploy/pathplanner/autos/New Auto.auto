@@ -7,23 +7,35 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Blue3-1"
+            "pathName": "Blue1-1"
           }
         },
         {
-          "type": "deadline",
+          "type": "path",
+          "data": {
+            "pathName": "Blue1-2"
+          }
+        },
+        {
+          "type": "parallel",
           "data": {
             "commands": [
               {
-                "type": "wait",
+                "type": "named",
                 "data": {
-                  "waitTime": 3.0
+                  "name": "shoot"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "ShootAndIndex"
+                  "name": "orbit"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 4.0
                 }
               }
             ]
@@ -32,23 +44,29 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Blue3-2"
+            "pathName": "Blue1-3"
           }
         },
         {
-          "type": "deadline",
+          "type": "parallel",
           "data": {
             "commands": [
               {
-                "type": "wait",
+                "type": "named",
                 "data": {
-                  "waitTime": 4.0
+                  "name": "shoot"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "ShootAndIndex"
+                  "name": "orbit"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 5.0
                 }
               }
             ]

@@ -4,6 +4,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -20,6 +21,7 @@ public class Robot extends TimedRobot {
    * 此函式會在機器人首次啟動時執行，應該用於任何初始化程式碼。
    */
   public Robot() {
+    RobotController.setBrownoutVoltage(5.5);
     // 啟動 WPILib 內建的資料紀錄器 (.wpilog)
     DataLogManager.start();
 

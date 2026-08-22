@@ -69,7 +69,7 @@ public class SwerveModuleConfigurator {
     // --- 【保護馬達與機械】定子端電流限制 (Stator Current) ---
     // 限制真正流進馬達內部線圈的電流 (與馬達產生的扭力直接成正比)。
     // 目的：防止馬達在堵轉 (如推牆) 時過熱燒毀，並限制最大扭力以避免齒輪崩壞或輪胎打滑
-    driveConfig.CurrentLimits.StatorCurrentLimit = 60;
+    driveConfig.CurrentLimits.StatorCurrentLimit = 55;
     driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // 設定驅動機構的齒輪比
@@ -88,8 +88,10 @@ public class SwerveModuleConfigurator {
     steerConfig.Slot0.kD = SwerveConstants.kSteerkD;
 
     // 設定轉向馬達的電源端電流限制
-    steerConfig.CurrentLimits.SupplyCurrentLimit = SwerveConstants.kSteerSupplyCurrentLimit;
+    steerConfig.CurrentLimits.SupplyCurrentLimit = SwerveConstants.ksteerS;
     steerConfig.CurrentLimits.SupplyCurrentLimitEnable = SwerveConstants.kSteerSupplyCurrentLimitEnable;
+    steerConfig.CurrentLimits.StatorCurrentLimit = 40;
+    steerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
     // --- 閉迴路感測器設定 ---
     // 將轉向位置的回饋來源，綁定為外部的 CANcoder，而非馬達內部編碼器 (消除齒輪間隙造成的誤差)

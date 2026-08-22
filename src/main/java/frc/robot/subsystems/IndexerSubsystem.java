@@ -24,7 +24,8 @@ public class IndexerSubsystem extends SubsystemBase {
         // 電流限制：關閉 Stator 電流限制，避免馬達啟動扭力不足被限制
         config.CurrentLimits.SupplyCurrentLimit = IndexerConstants.kIndexerSupplyCurrentLimit;
         config.CurrentLimits.SupplyCurrentLimitEnable = IndexerConstants.kIndexerSupplyCurrentLimitEnable;
-        config.CurrentLimits.StatorCurrentLimitEnable = false;
+        config.CurrentLimits.StatorCurrentLimit = 20;
+        config.CurrentLimits.StatorCurrentLimitEnable = true;
         
         // 確保軟體軟極限 (Soft Limit) 關閉，避免硬體暫存舊數據擋住輸出
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;

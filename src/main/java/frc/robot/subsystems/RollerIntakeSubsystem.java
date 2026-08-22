@@ -38,7 +38,7 @@ public class RollerIntakeSubsystem extends SubsystemBase {
         rollerintakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         rollerintakeConfig.CurrentLimits.SupplyCurrentLimit = RollerIntakeConstants.krollerSupplyCurrentLimit;
         rollerintakeConfig.CurrentLimits.SupplyCurrentLimitEnable = RollerIntakeConstants.krollerSupplyCurrentLimitEnable;
-        rollerintakeConfig.CurrentLimits.StatorCurrentLimit = 40;
+        rollerintakeConfig.CurrentLimits.StatorCurrentLimit = 60;
         rollerintakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         rollerintakeConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
