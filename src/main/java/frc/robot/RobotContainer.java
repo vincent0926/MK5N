@@ -49,12 +49,15 @@ public class RobotContainer {
                                 Commands.sequence(
                                                 Commands.runOnce(() -> shooterSubsystem.runshooter(), shooterSubsystem),
                                                 Commands.waitSeconds(0.5), // 等待摩擦輪加速
+                                                Commands.runOnce(() -> orbitSubsystem.runorbit(), orbitSubsystem),
+                                                Commands.waitSeconds(0.5), // 等待球射出
                                                 Commands.runOnce(() -> indexerSubsystem.runindexer(), indexerSubsystem),
                                                 Commands.waitSeconds(0.5), // 等待球射出
                                                 Commands.runOnce(() -> {
                                                         shooterSubsystem.stop();
+                                                        orbitSubsystem.stop();
                                                         indexerSubsystem.stop();
-                                                }, shooterSubsystem, indexerSubsystem)));
+                                                }, shooterSubsystem, indexerSubsystem, orbitSubsystem)));
 
                 NamedCommands.registerCommand("IntakeExtend",
                                 Commands.runOnce(() -> intakeSubsystem.extend(), intakeSubsystem));
@@ -68,7 +71,7 @@ public class RobotContainer {
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
                 // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單
                 autoChooser = AutoBuilder.buildAutoChooser();
-                SmartDashboard.putData("Auto Mode", autoChooser);
+                SmartDashboard.putData("Blue3", autoChooser);
 
                 // 設定底盤預設指令 (搖桿控制)
                 driveSubsystem.setDefaultCommand(
@@ -110,7 +113,8 @@ public class RobotContainer {
                                                 .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
                                                                 Math.abs(driverController.getLeftX()) > 0.1 ||
                                                                 Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||
-                                                                Math.abs(driverController.getRightTriggerAxis()) > 0.1));
+                                                                Math.abs(driverController
+                                                                                .getRightTriggerAxis()) > 0.1));
 
                 // 綁定 Y 鍵：啟動/停止滾輪進件機構 (Roller Intake)
                 driverController.y().toggleOnTrue(
@@ -177,11 +181,13 @@ public class RobotContainer {
 
                 // // 2. 上下鍵：單次移動 1 度
                 // driverController.povUp().onTrue(
-                //                 edu.wpi.first.wpilibj2.command.Commands.runOnce(() -> hoodSubsystem.addAngle(1.0),
-                //                                 hoodSubsystem));
+                // edu.wpi.first.wpilibj2.command.Commands.runOnce(() ->
+                // hoodSubsystem.addAngle(1.0),
+                // hoodSubsystem));
                 // driverController.povDown().onTrue(
-                //                 edu.wpi.first.wpilibj2.command.Commands.runOnce(() -> hoodSubsystem.addAngle(-1.0),
-                //                                 hoodSubsystem));
+                // edu.wpi.first.wpilibj2.command.Commands.runOnce(() ->
+                // hoodSubsystem.addAngle(-1.0),
+                // hoodSubsystem));
 
                 // 3. 左右鍵：持續移動 (按住時每 20ms 移動 1 度)
                 driverController.povRight().whileTrue(
