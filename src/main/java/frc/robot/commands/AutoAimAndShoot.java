@@ -111,7 +111,7 @@ public class AutoAimAndShoot extends Command {
             if (rotationSpeed < -3.0)
                 rotationSpeed = -3.0;
 
-            // 如果誤差很小 (例如小於 1.5 度)，代表已經對準
+            // 如果誤差很小 (例如小於 1.0 度)，代表已經對準
             boolean isAligned = Math.abs(tx) < 1.0;
             if (isAligned) {
                 rotationSpeed = 0.0;
@@ -134,6 +134,7 @@ public class AutoAimAndShoot extends Command {
             drive.setX(); // 沒看到目標也可以鎖定防撞
             shooter.stop();
             indexer.stop();
+            orbit.stop();
         }
     }
 
@@ -149,19 +150,16 @@ public class AutoAimAndShoot extends Command {
         indexer.stop();
         orbit.stop();
 
-        // 使用者要求釘住仰角，所以在指令結束（放開 A 鍵）時，不要把它歸零
+        // 指令結束（放開 A 鍵）時，把它歸零
         hood.setAngle(0);
 
         currentTargetAngle = -1.0;
     }
 
     // 檢查指令是否完成
-    //
-    // @return 永遠回傳 false，此指令綁定按鈕 (whileTrue)，由使用者放開按鍵來結束
-
     @Override
     public boolean isFinished() {
-        return false; // 這個指令會綁定按鈕 (whileTrue)，由使用者放開按鍵來結束
+        return false;
     }
 }
 

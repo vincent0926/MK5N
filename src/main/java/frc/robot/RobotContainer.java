@@ -1,9 +1,6 @@
 
 package frc.robot;
 
-import frc.robot.Constants.IndexerConstants;
-import frc.robot.Constants.IntakeConstants;
-
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.commands.AutoAimAndShoot;
 import frc.robot.subsystems.DriveSubsystem;
@@ -13,15 +10,12 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.OrbitSubsystem;
 import frc.robot.subsystems.RollerIntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
-//import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 
-import java.util.concurrent.ForkJoinPool;
 import java.util.List;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -72,6 +66,7 @@ public class RobotContainer {
                                 Commands.runOnce(() -> rollerIntakeSubsystem.stop(), rollerIntakeSubsystem));
 
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
+                // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單
                 autoChooser = AutoBuilder.buildAutoChooser();
                 SmartDashboard.putData("Auto Mode", autoChooser);
 
@@ -108,19 +103,15 @@ public class RobotContainer {
 
                 // 綁定 A 鍵：全自動瞄準與發射 (按一下啟動，再按一下停止)
                 // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷 A 鍵指令
-                
-                  driverController.a().toggleOnTrue(
-                                  new AutoAimAndShoot(
-                                                  visionSubsystem, hoodSubsystem, shooterSubsystem,
-                                                  indexerSubsystem, driveSubsystem, orbitSubsystem)
-                                                  .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
-                                                                  Math.abs(driverController.getLeftX()) > 0.1 ||
-                                                                  Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||
-                                                                  Math.abs(driverController.getRightTriggerAxis()) > 0.1));
-                 
+                driverController.a().toggleOnTrue(
+                                new AutoAimAndShoot(
+                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
+                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
+                                                .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
+                                                                Math.abs(driverController.getLeftX()) > 0.1 ||
+                                                                Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||
+                                                                Math.abs(driverController.getRightTriggerAxis()) > 0.1));
 
-                // driverController.a().onTrue(
-                //                 new AutoAimAndShoot(hoodSubsystem, visionSubsystem));
                 // 綁定 Y 鍵：啟動/停止滾輪進件機構 (Roller Intake)
                 driverController.y().toggleOnTrue(
                                 edu.wpi.first.wpilibj2.command.Commands.startEnd(
@@ -141,7 +132,6 @@ public class RobotContainer {
                                                 },
                                                 indexerSubsystem,
                                                 orbitSubsystem));
-               
 
                 driverController.leftBumper().onTrue(
                                 edu.wpi.first.wpilibj2.command.Commands.runOnce(() -> {
