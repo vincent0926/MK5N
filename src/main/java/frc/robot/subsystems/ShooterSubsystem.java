@@ -48,7 +48,7 @@ public class ShooterSubsystem extends SubsystemBase {
         // 電流限制
         shooterconfig.CurrentLimits.SupplyCurrentLimit = ShooterConstants.kShooterSupplyCurrentLimit;
         shooterconfig.CurrentLimits.SupplyCurrentLimitEnable = ShooterConstants.kShooterSupplyCurrentLimitEnable;
-        shooterconfig.CurrentLimits.StatorCurrentLimit = 80;
+        shooterconfig.CurrentLimits.StatorCurrentLimit = 30;
         shooterconfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
         // 應用設定到所有射擊馬達

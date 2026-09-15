@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -24,11 +23,11 @@ public class VisionSubsystem extends SubsystemBase {
     private final NetworkTable frontLimelight = NetworkTableInstance.getDefault()
             .getTable(VisionConstants.kLimelightFront);
     /** 左側 Limelight 的網路表格 */
-    private final NetworkTable leftLimelight = NetworkTableInstance.getDefault()
-            .getTable(VisionConstants.kLimelightLeft);
-    /** 右側 Limelight 的網路表格 */
-    private final NetworkTable rightLimelight = NetworkTableInstance.getDefault()
-            .getTable(VisionConstants.kLimelightRight);
+     private final NetworkTable leftLimelight = NetworkTableInstance.getDefault()
+             .getTable(VisionConstants.kLimelightLeft);
+     /** 右側 Limelight 的網路表格 */
+     private final NetworkTable rightLimelight = NetworkTableInstance.getDefault()
+             .getTable(VisionConstants.kLimelightRight);
 
     /** AprilTag 場地佈局，用於計算目標真實世界座標 */
     private AprilTagFieldLayout fieldLayout;

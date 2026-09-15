@@ -35,7 +35,7 @@ public final class Constants {
 
     // 右前輪 (FR)
     public static final int kFRDriveId = 2;
-    public static final int kFRSteerId = 1;
+    public static final int kFRSteerId = 46;
     public static final int kFREncoderId = 1;
     public static final double kFROffset = 0.289794921875;
     // 右後輪 (BR)
@@ -60,8 +60,7 @@ public final class Constants {
     public static final double kSteerkP = 11.0000 * (2 * Math.PI);
     public static final double kSteerkI = 0.0000 * (2 * Math.PI);
     public static final double kSteerkD = 0.0000 * (2 * Math.PI);
-    public static final double kSteerSupplyCurrentLimit = 40.0;// 電流限制
-    public static final boolean kSteerSupplyCurrentLimitEnable = true;// 打開電流限制
+
     // 驅動 (Drive) PID 與前饋 (Feedforward) 控制參數
     public static final double kWheelRadius = edu.wpi.first.math.util.Units.inchesToMeters(2.0);// 輪子半徑2inch
     public static final double kWheelCircumference = 2 * Math.PI * kWheelRadius;// 輪子周長
@@ -72,8 +71,15 @@ public final class Constants {
     public static final double kDrivekV = 2.35; // 速度常數
     public static final double kDrivekA = 0.05; // 加速度常數
 
-    public static final double kDriveSupplyCurrentLimit = 60.0;// 電流限制
+    public static final double kDriveSupplyCurrentLimit = 50.0;// 電流限制
     public static final boolean kDriveSupplyCurrentLimitEnable = true;// 打開電流限制
+    public static final double kDriveStatorCurrentLimit = 50.0;// 定子電流限制
+    public static final boolean kDriveStatorCurrentLimitEnable = true;// 打開定子電流限制
+
+    public static final double kSteerSupplyCurrentLimit = 40.0;// 電流限制
+    public static final boolean kSteerSupplyCurrentLimitEnable = true;// 打開電流限制
+    public static final double kSteerStatorCurrentLimit = 40.0;// 定子電流限制
+    public static final boolean kSteerStatorCurrentLimitEnable = true;// 打開定子電流限制
 
   }
 
@@ -91,24 +97,24 @@ public final class Constants {
     public static final double kShooterkV = 0.2;
     public static final double kShooterkA = 0;
 
-    public static final double kshooterVelocityVoltage = 30.0;
+    public static final double kshooterVelocityVoltage = 20.0;
 
     public static final double kShooterGearRatio = 1.0;
 
-    public static final double kShooterSupplyCurrentLimit = 100;
+    public static final double kShooterSupplyCurrentLimit = 30.0;
     public static final boolean kShooterSupplyCurrentLimitEnable = true;
 
   }
 
   // 仰角機構 (Hood) 參數
-  public static final class HoodConstants {
+  public final class HoodConstants {
     public static final int khoodId = 15;
 
-    public static final double khoodkP = 70.0;
+    public static final double khoodkP = 65.0;
     public static final double khoodkI = 0.0;
     public static final double khoodkD = 0.0;
-    public static final double khoodkS = 0.5;
-    public static final double khoodkG = 1.5;
+    public static final double khoodkS = 0.6;
+    public static final double khoodkG = 2.0;
 
     public static final double khoodMinAngle = 0.0;
     public static final double khoodMaxAngle = 45.0;
@@ -122,9 +128,9 @@ public final class Constants {
   // 輸彈機構 (Indexer) 參數
   public static class IndexerConstants {
 
-    public static final int kindexerId = 0;
-    public static final double kindexerVoltage = 7.5;
-    public static final double kIndexerSupplyCurrentLimit = 40.0;// 電流限制
+    public static final int kindexerId = 31;
+    public static final double kindexerVoltage = 10.0;
+    public static final double kIndexerSupplyCurrentLimit = 30.0;// 電流限制
     public static final boolean kIndexerSupplyCurrentLimitEnable = true;// 打開電流限制
   }
 
@@ -133,8 +139,8 @@ public final class Constants {
 
     public static final int kuorbitId = 14;
     public static final int kdorbitId = 13;
-    public static final double korbitVoltage = 7.5;
-    public static final double kOrbitSupplyCurrentLimit = 40.0;// 電流限制
+    public static final double korbitVoltage = 10.0;
+    public static final double kOrbitSupplyCurrentLimit = 30.0;// 電流限制
     public static final boolean kOrbitSupplyCurrentLimitEnable = true;// 打開電流限制
 
   }
@@ -151,7 +157,7 @@ public final class Constants {
     public static final double kRotationsPerMeter = 1.0 / kintakeMetersPerRotorRotation;// 齒條走 1 公尺，馬達要轉幾圈
 
     public static final double kintakein = 0.0;// 收0cm
-    public static final double kintakeout = 0.38;// 伸長30cm
+    public static final double kintakeout = 0.3;// 伸長30cm
 
     public static final double kintakekP = 0.8;
     public static final double kintakekI = 0.0;
@@ -159,7 +165,7 @@ public final class Constants {
     public static final double kintakeks = 0.07;
     public static final double kintakekg = 0.04;
 
-    public static final double kintakeSupplyCurrentLimit = 40;
+    public static final double kintakeSupplyCurrentLimit = 30;
     public static final boolean kintakeSupplyCurrentLimitEnable = true;
 
   }
@@ -168,8 +174,8 @@ public final class Constants {
   public static class RollerIntakeConstants {
     public static final int kFrollerintake = 45;
     public static final int kRrollerintake = 41;
-    public static final double krollerVoltage = 7;
-    public static final double krollerSupplyCurrentLimit = 40.0;// 電流限制
+    public static final double krollerVoltage = 5.5;
+    public static final double krollerSupplyCurrentLimit = 30.0;// 電流限制
     public static final boolean krollerSupplyCurrentLimitEnable = true;// 打開電流限制
 
   }
@@ -202,8 +208,4 @@ public final class Constants {
     };
   }
 
-  public static class OperatorConstants {
-
-    public static final int kDriverControllerPort = 0;
-  }
 }

@@ -38,7 +38,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 
     // 注意：請確認你的 RobotContainer.java 中確實有定義 periodic() 方法，否則請註解掉下方一行
-    m_robotContainer.periodic();
+    //m_robotContainer.periodic();
   }
 
   /** 每次機器人進入禁用 (Disabled) 模式時，此函式會被呼叫一次。 */
