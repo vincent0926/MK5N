@@ -49,21 +49,14 @@ public class AutoAimAndShoot extends Command {
         this.orbit = orbit;
 
         addRequirements(hood, shooter, indexer, drive, orbit);
-        this.hasValidTarget = hasValidTarget;
+
 
         // 初始化查表資料
         for (double[] point : AimConstants.kDistanceToAngleMap) {
-            distanceToAngleMap.put(point[0], point[0]);
-            distanceToAngleMap.put(point[1], point[1]);
-            distanceToAngleMap.put(point[2], point[2]);
-            distanceToAngleMap.put(point[3], point[3]);
+            distanceToAngleMap.put(point[0], point[1]); // 距離 → 仰角
         }
         for (double[] point : AimConstants.kDistanceToRPSMap) {
-            distanceToRPSMap.put(point[0], point[0]);
-            distanceToRPSMap.put(point[1], point[1]);
-            distanceToRPSMap.put(point[2], point[2]);
-            distanceToRPSMap.put(point[3], point[3]);
-
+            distanceToRPSMap.put(point[0], point[1]); // 距離 → 轉速
         }
     }
 
