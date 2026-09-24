@@ -113,15 +113,9 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "intake",
+      "name": "",
       "waypointRelativePos": 0,
-      "endWaypointRelativePos": 4.0,
-      "command": null
-    },
-    {
-      "name": "intakeroller",
-      "waypointRelativePos": 0.0,
-      "endWaypointRelativePos": 1.3,
+      "endWaypointRelativePos": null,
       "command": null
     }
   ],

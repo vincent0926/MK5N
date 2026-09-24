@@ -135,6 +135,54 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
+     * 取得前方 Limelight (frontLimelight) 看到對應聯盟 Hub AprilTag 的水平誤差 (tx)。
+     * 限定只使用前方相機進行對齊，避免側向相機誤判或切換造成底盤暴衝跳動。
+     *
+     * @return 水平誤差 (度)，若未辨識到對應聯盟 Hub AprilTag 則回傳 0.0
+     */
+    public double getHubTx() {
+        // 若前方相機未偵測到任何目標 (tv != 1.0)，直接回傳 0.0
+        if (frontLimelight.getEntry("tv").getDouble(0) != 1.0) {
+            return 0.0;
+        }
+
+        // 判斷當前聯盟顏色：紅方為 ID 9, 10；藍方為 ID 25, 26
+        boolean isRed = DriverStation.getAlliance().isPresent()
+                && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+        int targetId1 = isRed ? 9 : 25;
+        int targetId2 = isRed ? 10 : 26;
+
+        // 檢查前方相機當前鎖定的 AprilTag ID 是否符合 Hub ID
+        long tid = (long) frontLimelight.getEntry("tid").getInteger(0);
+        if (tid == targetId1 || tid == targetId2) {
+            return frontLimelight.getEntry("tx").getDouble(0.0);
+        }
+        return 0.0;
+    }
+
+    /**
+     * 檢查前方 Limelight 是否成功鎖定對應聯盟的 Hub AprilTag。
+     * 
+     * @return 若前方相機有看到合法的 Hub AprilTag 則回傳 true，否則回傳 false
+     */
+    public boolean hasHubTarget() {
+        // 若前方相機未偵測到目標，回傳 false
+        if (frontLimelight.getEntry("tv").getDouble(0) != 1.0) {
+            return false;
+        }
+
+        // 判斷當前聯盟顏色
+        boolean isRed = DriverStation.getAlliance().isPresent()
+                && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+        int targetId1 = isRed ? 9 : 25;
+        int targetId2 = isRed ? 10 : 26;
+
+        // 檢查前方相機目標 ID 是否吻合
+        long tid = (long) frontLimelight.getEntry("tid").getInteger(0);
+        return tid == targetId1 || tid == targetId2;
+    }
+
+    /**
      * 取得目前有看到目標的 Limelight 水平誤差 (tx)
      * 
      * @return 水平誤差 (度)，若沒看到則回傳 0.0

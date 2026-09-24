@@ -74,12 +74,14 @@ public class AutoAimAndShoot extends Command {
      */
     @Override
     public void execute() {
-        // 獲取最佳目標距離
-        double distance = vision.getBestTargetDistance();
-        // 獲取最佳目標水平偏移角度
-        double tx = vision.getBestTargetTx();
+        // 獲取當前聯盟 HUB 目標距離 (公尺)
+        double distance = vision.getHubDistance();
+        // 獲取前方相機對準 HUB 的水平偏移角度 (度)
+        double tx = vision.getHubTx();
+        // 檢查前方相機是否已辨識並鎖定 HUB AprilTag
+        boolean hasHub = vision.hasHubTarget();
 
-        if (distance > 0) {
+        if (hasHub && distance > 0) {
             hasValidTarget = true;
             // 透過查表取得目標仰角與轉速，並加上預設的仰角增加度數
             double targetAngle = distanceToAngleMap.get(distance) + AimConstants.kElevationOffset;
@@ -95,25 +97,30 @@ public class AutoAimAndShoot extends Command {
             shooter.setRPS(targetRPS); // 啟動飛輪
 
             // 控制底盤水平對準 (P 控制器)
-            // 將 tx (度) 轉換為旋轉角速度 (rad/s)，這裡的 0.05 是比例增益 (Kp)，可依實際旋轉速度調整
-            double rotationSpeed = -tx * 0.08;
+            // 依指示設定比例增益 kP = 0.02，不使用微分阻尼 kD (kD = 0.0)
+            // tx (度) 為相對於目標的水平角偏差；tx > 0 表示目標在畫面右側，底盤須順時針 (CW, 負值) 旋轉，故加上負號
+            double kP = 0.02;
+            double rotationSpeed = -tx * kP;
 
-            // 限制最大旋轉速度，避免太猛烈
-            if (rotationSpeed > 3.0)
-                rotationSpeed = 3.0;
-            if (rotationSpeed < -3.0)
-                rotationSpeed = -3.0;
+            // 限制最大旋轉角速度，避免旋轉過猛
+            if (rotationSpeed > 1.0)
+                rotationSpeed = 1.0;
+            if (rotationSpeed < -1.0)
+                rotationSpeed = -1.0;
 
-            // 如果誤差很小 (例如小於 1.0 度)，代表已經對準
+            // 如果誤差小於 1.0 度，代表車頭已經水平對準 HUB
             boolean isAligned = Math.abs(tx) < 1.0;
             if (isAligned) {
+                // 對準後旋轉速度給 0，平穩維持現有角度與煞車
+                // 注意：切勿呼叫 drive.setX()！呼叫 setX 會強制 Swerve 模組瞬間轉向 90 度打成 X 陣型，造成底盤劇烈震動與慣性 Overshoot 死循環
                 rotationSpeed = 0.0;
-                drive.setX(); // 對準後設定為 X 陣型以防撞
+                drive.drive(0, 0, 0, false);
             } else {
-                drive.drive(0, 0, rotationSpeed, false); // 未對準時繼續轉向
+                // 未對準時以計算出的平滑角速度旋轉對齊 (Robot-Relative)
+                drive.drive(0, 0, rotationSpeed, false);
             }
 
-            // 發射邏輯：當仰角到位、飛輪轉速足夠且底盤已對準時，啟動 indexer 送球
+            // 發射邏輯：當仰角到位、飛輪轉速足夠且底盤已對準時，啟動 indexer 與 orbit 送球
             if (hood.isAtAngle() && shooter.isAtSpeed(targetRPS) && isAligned) {
                 indexer.runindexer();
                 orbit.runorbit();
@@ -122,9 +129,9 @@ public class AutoAimAndShoot extends Command {
                 orbit.stop();
             }
         } else {
-            // 沒有看到目標，維持原位 (可視需求打 X 或停止)
+            // 沒有看到 HUB 目標，維持原位並停止旋轉 (使用平穩停止，不打 X 陣型避免抽搐)
             hasValidTarget = false;
-            drive.setX(); // 沒看到目標也可以鎖定防撞
+            drive.drive(0, 0, 0, false);
             shooter.stop();
             indexer.stop();
             orbit.stop();

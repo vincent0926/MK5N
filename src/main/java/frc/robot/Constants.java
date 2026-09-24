@@ -57,7 +57,7 @@ public final class Constants {
     public static final int kPigeonId = 11;
 
     // 轉向 (Steer) PID 控制參數
-    public static final double kSteerkP = 11.0000 * (2 * Math.PI);
+    public static final double kSteerkP = 2.0000 * (2 * Math.PI);
     public static final double kSteerkI = 0.0000 * (2 * Math.PI);
     public static final double kSteerkD = 0.0000 * (2 * Math.PI);
 
@@ -97,7 +97,7 @@ public final class Constants {
     public static final double kShooterkV = 0.2;
     public static final double kShooterkA = 0;
 
-    public static final double kshooterVelocityVoltage = 20.0;
+    public static final double kshooterVelocityVoltage = 30.0;
 
     public static final double kShooterGearRatio = 1.0;
 
@@ -201,7 +201,7 @@ public final class Constants {
 
     // 距離 (公尺) 對應 轉速 (RPS, TalonFX 單位)
     public static final double[][] kDistanceToRPSMap = {
-        { 1.0, 18.0 },
+        { 1.0, 20.0 },
         { 2.0, 20.0 },
         { 3.0, 30.0 },
         { 4.0, 40.0 }
