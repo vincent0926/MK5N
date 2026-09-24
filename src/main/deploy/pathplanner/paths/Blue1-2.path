@@ -113,9 +113,9 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "",
+      "name": "StartRoller",
       "waypointRelativePos": 0,
-      "endWaypointRelativePos": null,
+      "endWaypointRelativePos": 2.8294434470377023,
       "command": null
     }
   ],
