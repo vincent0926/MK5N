@@ -1,7 +1,9 @@
 package frc.robot.commands;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AimConstants;
 import frc.robot.subsystems.HoodSubsystem;
@@ -54,7 +56,6 @@ public class AutoAimAndShoot extends Command {
 
         addRequirements(hood, shooter, indexer, drive, orbit);
 
-
         // 初始化查表資料
         for (double[] point : AimConstants.kDistanceToAngleMap) {
             distanceToAngleMap.put(point[0], point[1]); // 距離 → 仰角
@@ -77,17 +78,20 @@ public class AutoAimAndShoot extends Command {
         timer.reset();
     }
 
-    /**
-     * 指令執行期間持續呼叫：獲取視覺資料並控制各個機構
-     */
     @Override
     public void execute() {
-        // 獲取當前聯盟 HUB 目標距離 (公尺)
-        double distance = vision.getHubDistance();
-        // 獲取前方相機對準 HUB 的水平偏移角度 (度)
-        double tx = vision.getHubTx();
         // 檢查前方相機是否已辨識並鎖定 HUB AprilTag
         boolean hasHub = vision.hasHubTarget();
+        // 獲取當前機器人姿態 (融合輪速里程計與視覺定位)
+        Pose2d currentPose = drive.getPose();
+        // 獲取當前聯盟 HUB 目標中心距離 (公尺)
+        double distance = vision.getHubDistance(currentPose);
+        // 獲取前方相機/車頭對準 HUB 中心的水平偏移角度 (度)
+        double tx = vision.getHubTx(currentPose);
+
+        SmartDashboard.putNumber("Aim/HubDistance", distance);
+        SmartDashboard.putNumber("Aim/HubTx", tx);
+        SmartDashboard.putBoolean("Aim/HasHubTarget", hasHub);
 
         if (hasHub && distance > 0) {
             hasValidTarget = true;
@@ -119,8 +123,7 @@ public class AutoAimAndShoot extends Command {
             // 如果誤差小於 1.0 度，代表車頭已經水平對準 HUB
             boolean isAligned = Math.abs(tx) < 1.0;
             if (isAligned) {
-                // 對準後旋轉速度給 0，平穩維持現有角度與煞車
-                // 注意：切勿呼叫 drive.setX()！呼叫 setX 會強制 Swerve 模組瞬間轉向 90 度打成 X 陣型，造成底盤劇烈震動與慣性 Overshoot 死循環
+
                 rotationSpeed = 0.0;
                 drive.drive(0, 0, 0, false);
             } else {

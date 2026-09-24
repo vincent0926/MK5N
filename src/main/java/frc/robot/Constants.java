@@ -185,6 +185,16 @@ public final class Constants {
     public static final String kLimelightFront = "limelight-up";
     public static final String kLimelightLeft = "limelight-left";
     public static final String kLimelightRight = "limelight-right";
+
+    // 2026 REBUILT 場地 HUB 中心座標 (公尺) - 以 WPI Blue 原點為基準
+    // Blue Alliance Hub: X = 4.626 m, Y = 4.035 m
+    public static final Translation2d kBlueHubCenter = new Translation2d(4.626, 4.035);
+    // Red Alliance Hub: X = 11.915 m, Y = 4.035 m
+    public static final Translation2d kRedHubCenter = new Translation2d(11.915, 4.035);
+
+    // 2026 REBUILT 場地 HUB AprilTag ID 清單 (四個面全部標籤)
+    public static final int[] kRedHubTagIds = { 2, 3, 4, 5, 8, 9, 10, 11 };
+    public static final int[] kBlueHubTagIds = { 18, 19, 20, 21, 24, 25, 26, 27 };
   }
 
   public static class AimConstants {

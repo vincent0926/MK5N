@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -87,77 +88,132 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * 取得目前有看到對應聯盟 Hub (Speaker) AprilTag 的距離。
-     * 自動根據 DriverStation 選擇紅方(4, 3)或藍方(7, 8)的 AprilTag。
+     * 檢查指定的 AprilTag ID 是否屬於當前聯盟的 HUB。
+     *
+     * @param tid 欲檢查的 AprilTag ID
+     * @param isRed 是否為紅方聯盟
+     * @return 若屬於當前聯盟 HUB 則為 true
+     */
+    public boolean isHubTag(int tid, boolean isRed) {
+        int[] hubTags = isRed ? VisionConstants.kRedHubTagIds : VisionConstants.kBlueHubTagIds;
+        for (int tagId : hubTags) {
+            if (tagId == tid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 根據機器人目前估測姿態 (Pose) 計算到對應聯盟 HUB 中心的水平距離 (公尺)。
+     *
+     * @param robotPose 機器人當前姿態 (融合輪速里程計與視覺定位)
+     * @return 距離 (公尺)
+     */
+    public double getHubDistance(Pose2d robotPose) {
+        boolean isRed = DriverStation.getAlliance().isPresent()
+                && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+        Translation2d hubCenter = isRed ? VisionConstants.kRedHubCenter : VisionConstants.kBlueHubCenter;
+        return robotPose.getTranslation().getDistance(hubCenter);
+    }
+
+    /**
+     * 取得目前有看到對應聯盟 Hub AprilTag 時，機器人到 HUB 中心的水平距離。
+     * 透過 Limelight 的 botpose_wpiblue 計算到 HUB 中心的平面距離。
      * 
      * @return 距離 (公尺)，如果沒看到則回傳 -1.0
      */
     public double getHubDistance() {
-        // 判斷是否為紅方聯盟
         boolean isRed = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
-        // 2026 賽季 Hub ID: 紅方 = 9, 10; 藍方 = 25, 26
-        int targetId1 = isRed ? 9 : 25;
-        int targetId2 = isRed ? 10 : 26;
+        Translation2d hubCenter = isRed ? VisionConstants.kRedHubCenter : VisionConstants.kBlueHubCenter;
 
-        // 檢查各個 Limelight 是否有看到指定的 AprilTag 並取得距離
-        double dist = checkSpecificTagDistance(frontLimelight, targetId1, targetId2);
+        // 檢查各個 Limelight 是否有看到 HUB AprilTag 並計算至 HUB 中心距離
+        double dist = getDistanceToHubFromLimelight(frontLimelight, hubCenter, isRed);
         if (dist > 0)
             return dist;
-        dist = checkSpecificTagDistance(leftLimelight, targetId1, targetId2);
+        dist = getDistanceToHubFromLimelight(leftLimelight, hubCenter, isRed);
         if (dist > 0)
             return dist;
-        dist = checkSpecificTagDistance(rightLimelight, targetId1, targetId2);
+        dist = getDistanceToHubFromLimelight(rightLimelight, hubCenter, isRed);
         return dist;
     }
 
     /**
-     * 檢查指定的 Limelight 是否有看到特定的 AprilTag ID 並回傳距離。
+     * 檢查指定的 Limelight 是否有看到 HUB AprilTag，若有則利用其 botpose_wpiblue 計算至 HUB 中心的距離。
      *
      * @param table 欲檢查的 Limelight 網路表格
-     * @param id1 第一個目標 AprilTag ID
-     * @param id2 第二個目標 AprilTag ID
+     * @param hubCenter 當前聯盟 HUB 中心座標
+     * @param isRed 是否為紅方聯盟
      * @return 距離 (公尺)，如果沒看到則回傳 -1.0
      */
-    private double checkSpecificTagDistance(NetworkTable table, int id1, int id2) {
-        // 如果沒有偵測到有效目標 (tv != 1.0)，則回傳 -1.0
+    private double getDistanceToHubFromLimelight(NetworkTable table, Translation2d hubCenter, boolean isRed) {
         if (table.getEntry("tv").getDouble(0) != 1.0) {
             return -1.0;
         }
 
-        // 取得當前鎖定的 AprilTag ID
         long tid = (long) table.getEntry("tid").getInteger(0);
-        // 如果 ID 符合目標，則計算並回傳距離
-        if (tid == id1 || tid == id2) {
-            return getDistanceFromLimelight(table);
+        if (isHubTag((int) tid, isRed)) {
+            double[] botpose = table.getEntry("botpose_wpiblue").getDoubleArray(new double[6]);
+            if (botpose.length >= 2 && (botpose[0] != 0.0 || botpose[1] != 0.0)) {
+                Translation2d robotTrans = new Translation2d(botpose[0], botpose[1]);
+                return robotTrans.getDistance(hubCenter);
+            }
         }
         return -1.0;
     }
 
     /**
-     * 取得前方 Limelight (frontLimelight) 看到對應聯盟 Hub AprilTag 的水平誤差 (tx)。
-     * 限定只使用前方相機進行對齊，避免側向相機誤判或切換造成底盤暴衝跳動。
+     * 根據機器人目前估測姿態 (Pose) 計算車頭 (Shooter) 對準 HUB 中心的水平角度誤差 (tx)。
      *
-     * @return 水平誤差 (度)，若未辨識到對應聯盟 Hub AprilTag 則回傳 0.0
+     * @param robotPose 機器人姿態 (融合輪速里程計與視覺定位)
+     * @return 水平誤差 (度)，HUB 在右為正、在左為負 (符合 Limelight tx 慣例)
      */
-    public double getHubTx() {
-        // 若前方相機未偵測到任何目標 (tv != 1.0)，直接回傳 0.0
-        if (frontLimelight.getEntry("tv").getDouble(0) != 1.0) {
+    public double getHubTx(Pose2d robotPose) {
+        if (!hasHubTarget()) {
             return 0.0;
         }
 
-        // 判斷當前聯盟顏色：紅方為 ID 9, 10；藍方為 ID 25, 26
         boolean isRed = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
-        int targetId1 = isRed ? 9 : 25;
-        int targetId2 = isRed ? 10 : 26;
+        Translation2d hubCenter = isRed ? VisionConstants.kRedHubCenter : VisionConstants.kBlueHubCenter;
 
-        // 檢查前方相機當前鎖定的 AprilTag ID 是否符合 Hub ID
-        long tid = (long) frontLimelight.getEntry("tid").getInteger(0);
-        if (tid == targetId1 || tid == targetId2) {
-            return frontLimelight.getEntry("tx").getDouble(0.0);
+        Translation2d robotTrans = robotPose.getTranslation();
+        double dx = hubCenter.getX() - robotTrans.getX();
+        double dy = hubCenter.getY() - robotTrans.getY();
+        // 場地座標系中機器人指向 HUB 中心的絕對角度 (度, -180 ~ 180)
+        double targetAngleDeg = Math.toDegrees(Math.atan2(dy, dx));
+
+        // 機器人當前朝向角度 (度, -180 ~ 180)
+        double robotHeadingDeg = robotPose.getRotation().getDegrees();
+        // 計算角度差：目標角度 - 當前朝向 (正值代表目標在當前車頭左側 CCW)
+        double angleErrorDeg = MathUtil.inputModulus(targetAngleDeg - robotHeadingDeg, -180.0, 180.0);
+
+        // Limelight tx 慣例：目標在畫面右側為正 (CW)，在畫面左側為負 (CCW)
+        // 故 tx = -angleErrorDeg
+        return -angleErrorDeg;
+    }
+
+    /**
+     * 取得前方 Limelight (frontLimelight) 看到對應聯盟 Hub AprilTag 時，對準 HUB 中心的水平誤差 (tx)。
+     * 優先以 Limelight 回傳之 botpose 姿態計算至 HUB 中心之幾何角度；若無法取得 botpose 則退回 AprilTag tx。
+     *
+     * @return 水平誤差 (度)，若未辨識到 HUB AprilTag 則回傳 0.0
+     */
+    public double getHubTx() {
+        if (!hasHubTarget()) {
+            return 0.0;
         }
-        return 0.0;
+
+        double[] botpose = frontLimelight.getEntry("botpose_wpiblue").getDoubleArray(new double[6]);
+        if (botpose.length >= 6 && (botpose[0] != 0.0 || botpose[1] != 0.0)) {
+            Pose2d robotPose = new Pose2d(botpose[0], botpose[1],
+                    edu.wpi.first.math.geometry.Rotation2d.fromDegrees(botpose[5]));
+            return getHubTx(robotPose);
+        }
+
+        // 若無 botpose，備用退回原始 AprilTag tx
+        return frontLimelight.getEntry("tx").getDouble(0.0);
     }
 
     /**
@@ -166,20 +222,15 @@ public class VisionSubsystem extends SubsystemBase {
      * @return 若前方相機有看到合法的 Hub AprilTag 則回傳 true，否則回傳 false
      */
     public boolean hasHubTarget() {
-        // 若前方相機未偵測到目標，回傳 false
         if (frontLimelight.getEntry("tv").getDouble(0) != 1.0) {
             return false;
         }
 
-        // 判斷當前聯盟顏色
         boolean isRed = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
-        int targetId1 = isRed ? 9 : 25;
-        int targetId2 = isRed ? 10 : 26;
 
-        // 檢查前方相機目標 ID 是否吻合
         long tid = (long) frontLimelight.getEntry("tid").getInteger(0);
-        return tid == targetId1 || tid == targetId2;
+        return isHubTag((int) tid, isRed);
     }
 
     /**
