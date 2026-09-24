@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AimConstants;
 import frc.robot.subsystems.HoodSubsystem;
@@ -23,6 +24,9 @@ public class AutoAimAndShoot extends Command {
     private final IndexerSubsystem indexer;
     private final DriveSubsystem drive;
     private final OrbitSubsystem orbit;
+
+    // 啟動時間計時器，用於控制 Shooter 與 Hood 先動 1.5 秒後再啟動 Indexer 與 Orbit 送球
+    private final Timer timer = new Timer();
 
     // 距離與仰角的內插法查表
     private final InterpolatingDoubleTreeMap distanceToAngleMap = new InterpolatingDoubleTreeMap();
@@ -67,6 +71,10 @@ public class AutoAimAndShoot extends Command {
         targetRPS = 0.0;
         currentTargetAngle = -1.0;
         isAngleLocked = false; // 重置鎖定狀態，每次按下按鈕都可以重新瞄準
+
+        // 重置並停止計時器，每次按下按鈕重新計算 1.5 秒
+        timer.stop();
+        timer.reset();
     }
 
     /**
@@ -120,17 +128,25 @@ public class AutoAimAndShoot extends Command {
                 drive.drive(0, 0, rotationSpeed, false);
             }
 
-            // 發射邏輯：當仰角到位、飛輪轉速足夠且底盤已對準時，啟動 indexer 與 orbit 送球
-            if (hood.isAtAngle() && shooter.isAtSpeed(targetRPS) && isAligned) {
+            // 啟動計時器：開始計算 Shooter 與 Hood 運作時間
+            timer.start();
+
+            // 發射邏輯：Shooter 與 Hood 先動 1.5 秒（確保飛輪轉速與仰角充分到位），之後 Indexer 與 Orbit 跟著啟動送球
+            if (timer.get() >= 1.5) {
+                // 滿 1.5 秒後，啟動送球機構發射
                 indexer.runindexer();
                 orbit.runorbit();
             } else {
+                // 未滿 1.5 秒時，送球機構保持停止，等待飛輪加速與仰角到位
                 indexer.stop();
                 orbit.stop();
             }
         } else {
             // 沒有看到 HUB 目標，維持原位並停止旋轉 (使用平穩停止，不打 X 陣型避免抽搐)
             hasValidTarget = false;
+            // 失去目標時重置計時器，避免下次鎖定時瞬間送球
+            timer.stop();
+            timer.reset();
             drive.drive(0, 0, 0, false);
             shooter.stop();
             indexer.stop();
@@ -149,6 +165,10 @@ public class AutoAimAndShoot extends Command {
         shooter.stop();
         indexer.stop();
         orbit.stop();
+
+        // 重置並停止計時器
+        timer.stop();
+        timer.reset();
 
         // 指令結束（放開 A 鍵）時，把它歸零
         hood.setAngle(0);

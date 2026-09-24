@@ -67,6 +67,7 @@ public class RobotContainer {
                                 Commands.runOnce(() -> rollerIntakeSubsystem.runRollers(), rollerIntakeSubsystem));
                 NamedCommands.registerCommand("StopRoller",
                                 Commands.runOnce(() -> rollerIntakeSubsystem.stop(), rollerIntakeSubsystem));
+                
 
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
                 // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單
