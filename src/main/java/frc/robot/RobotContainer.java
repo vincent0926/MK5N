@@ -67,7 +67,18 @@ public class RobotContainer {
                                 Commands.runOnce(() -> rollerIntakeSubsystem.runRollers(), rollerIntakeSubsystem));
                 NamedCommands.registerCommand("StopRoller",
                                 Commands.runOnce(() -> rollerIntakeSubsystem.stop(), rollerIntakeSubsystem));
-                
+
+                // 註冊自動瞄準與射擊指令 (包含 3.0 秒超時保護，避免自動模式卡死)
+                NamedCommands.registerCommand("AutoAimAndShoot",
+                                new AutoAimAndShoot(
+                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
+                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
+                                                .withTimeout(3.0));
+                NamedCommands.registerCommand("shoot",
+                                new AutoAimAndShoot(
+                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
+                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
+                                                .withTimeout(3.0));
 
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
                 // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單

@@ -1,9 +1,7 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AimConstants;
 import frc.robot.subsystems.HoodSubsystem;
@@ -78,20 +76,17 @@ public class AutoAimAndShoot extends Command {
         timer.reset();
     }
 
+    /**
+     * 指令執行期間持續呼叫：獲取視覺資料並控制各個機構
+     */
     @Override
     public void execute() {
+        // 獲取當前聯盟 HUB 目標距離 (公尺)
+        double distance = vision.getHubDistance();
+        // 獲取前方相機對準 HUB 的水平偏移角度 (度)
+        double tx = vision.getHubTx();
         // 檢查前方相機是否已辨識並鎖定 HUB AprilTag
         boolean hasHub = vision.hasHubTarget();
-        // 獲取當前機器人姿態 (融合輪速里程計與視覺定位)
-        Pose2d currentPose = drive.getPose();
-        // 獲取當前聯盟 HUB 目標中心距離 (公尺)
-        double distance = vision.getHubDistance(currentPose);
-        // 獲取前方相機/車頭對準 HUB 中心的水平偏移角度 (度)
-        double tx = vision.getHubTx(currentPose);
-
-        SmartDashboard.putNumber("Aim/HubDistance", distance);
-        SmartDashboard.putNumber("Aim/HubTx", tx);
-        SmartDashboard.putBoolean("Aim/HasHubTarget", hasHub);
 
         if (hasHub && distance > 0) {
             hasValidTarget = true;
@@ -134,13 +129,13 @@ public class AutoAimAndShoot extends Command {
             // 啟動計時器：開始計算 Shooter 與 Hood 運作時間
             timer.start();
 
-            // 發射邏輯：Shooter 與 Hood 先動 1.5 秒（確保飛輪轉速與仰角充分到位），之後 Indexer 與 Orbit 跟著啟動送球
-            if (timer.get() >= 1.5) {
+            // 發射邏輯：Shooter 與 Hood 先動 1.0 秒（確保飛輪轉速與仰角充分到位），之後 Indexer 與 Orbit 跟著啟動送球
+            if (timer.get() >= 1.0) {
                 // 滿 1.5 秒後，啟動送球機構發射
                 indexer.runindexer();
                 orbit.runorbit();
             } else {
-                // 未滿 1.5 秒時，送球機構保持停止，等待飛輪加速與仰角到位
+                // 未滿 1.0 秒時，送球機構保持停止，等待飛輪加速與仰角到位
                 indexer.stop();
                 orbit.stop();
             }

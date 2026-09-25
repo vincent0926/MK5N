@@ -34,14 +34,14 @@
   "eventMarkers": [
     {
       "name": "IntakeExtend",
-      "waypointRelativePos": 0.3052064631956913,
-      "endWaypointRelativePos": 0.5619389587073611,
+      "waypointRelativePos": 0.3482944344703767,
+      "endWaypointRelativePos": null,
       "command": null
     },
     {
       "name": "StartRoller",
-      "waypointRelativePos": 0.7378815080789946,
-      "endWaypointRelativePos": 1.0,
+      "waypointRelativePos": 0.8025134649910237,
+      "endWaypointRelativePos": null,
       "command": null
     }
   ],

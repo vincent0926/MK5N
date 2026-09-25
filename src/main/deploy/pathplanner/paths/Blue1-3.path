@@ -174,8 +174,20 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "",
+      "name": "StartRoller",
       "waypointRelativePos": 0,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "IntakeRetract",
+      "waypointRelativePos": 0.20107719928186715,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "IntakeExtend",
+      "waypointRelativePos": 1.998204667863554,
       "endWaypointRelativePos": null,
       "command": null
     }
