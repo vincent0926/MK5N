@@ -44,20 +44,7 @@ public class RobotContainer {
         private final SendableChooser<Command> autoChooser;
 
         public RobotContainer() {
-                // 註冊 PathPlanner Named Commands (必須在 AutoChooser 建立之前註冊)
-                NamedCommands.registerCommand("ShootAndIndex",
-                                Commands.sequence(
-                                                Commands.runOnce(() -> shooterSubsystem.runshooter(), shooterSubsystem),
-                                                Commands.waitSeconds(0.5), // 等待摩擦輪加速
-                                                Commands.runOnce(() -> orbitSubsystem.runorbit(), orbitSubsystem),
-                                                Commands.waitSeconds(0.5), // 等待球射出
-                                                Commands.runOnce(() -> indexerSubsystem.runindexer(), indexerSubsystem),
-                                                Commands.waitSeconds(0.5), // 等待球射出
-                                                Commands.runOnce(() -> {
-                                                        shooterSubsystem.stop();
-                                                        orbitSubsystem.stop();
-                                                        indexerSubsystem.stop();
-                                                }, shooterSubsystem, indexerSubsystem, orbitSubsystem)));
+                // 註冊 PathPlanner Named Commands (必須在 AutoChooser 建立之前註冊)  
 
                 NamedCommands.registerCommand("IntakeExtend",
                                 Commands.runOnce(() -> intakeSubsystem.extend(), intakeSubsystem));
@@ -67,31 +54,24 @@ public class RobotContainer {
                                 Commands.runOnce(() -> rollerIntakeSubsystem.runRollers(), rollerIntakeSubsystem));
                 NamedCommands.registerCommand("StopRoller",
                                 Commands.runOnce(() -> rollerIntakeSubsystem.stop(), rollerIntakeSubsystem));
-
-                // 註冊自動瞄準與射擊指令 (包含 3.0 秒超時保護，避免自動模式卡死)
                 NamedCommands.registerCommand("AutoAimAndShoot",
-                                new AutoAimAndShoot(
-                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
-                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
-                                                .withTimeout(3.0));
+                                new AutoAimAndShoot(visionSubsystem, hoodSubsystem, shooterSubsystem, indexerSubsystem, driveSubsystem, orbitSubsystem).withTimeout(3.0));
                 NamedCommands.registerCommand("shoot",
-                                new AutoAimAndShoot(
-                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
-                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
-                                                .withTimeout(3.0));
+                                new AutoAimAndShoot(visionSubsystem, hoodSubsystem, shooterSubsystem, indexerSubsystem, driveSubsystem, orbitSubsystem).withTimeout(3.0));
+                
 
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
                 // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單
-                autoChooser = AutoBuilder.buildAutoChooser();
-                SmartDashboard.putData("Blue3", autoChooser);
+                autoChooser = AutoBuilder.buildAutoChooser("Blue3");
+                SmartDashboard.putData("Auto Chooser", autoChooser);
 
                 // 設定底盤預設指令 (搖桿控制)
                 driveSubsystem.setDefaultCommand(
                                 driveSubsystem.run(() -> {
                                         // 1. 處理移動 (左搖桿)
                                         // 這裡將原本的 y 和 x 加上負號 (反轉)，讓 Shooter 變成車頭
-                                        double y = -MathUtil.applyDeadband(driverController.getLeftY(), 0.06);
-                                        double x = -MathUtil.applyDeadband(driverController.getLeftX(), 0.06);
+                                        double y = -MathUtil.applyDeadband(driverController.getLeftY()*0.9, 0.06);
+                                        double x = -MathUtil.applyDeadband(driverController.getLeftX()*0.9, 0.06);
 
                                         // 2. 處理旋轉 (扳機鍵：右扳機 - 左扳機)
                                         // 假設：按下右扳機 -> 右轉，按下左扳機 -> 左轉

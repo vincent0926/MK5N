@@ -20,12 +20,12 @@
         "y": 0.5827741228034073
       },
       "prevControl": {
-        "x": 2.302055217629258,
-        "y": 0.8344960394652792
+        "x": 2.2804479701633715,
+        "y": 0.6821050201122881
       },
       "nextControl": {
-        "x": 3.9042324561403516,
-        "y": 0.505844298245613
+        "x": 4.054511363636363,
+        "y": 0.5409886363636371
       },
       "isLocked": false,
       "linkedName": null
@@ -36,12 +36,12 @@
         "y": 1.0828179824561404
       },
       "prevControl": {
-        "x": 5.481673274357043,
-        "y": 0.38666774447802665
+        "x": 5.342863636363636,
+        "y": 0.3863863636363636
       },
       "nextControl": {
-        "x": 6.4525328947368426,
-        "y": 1.8521162280701755
+        "x": 6.545201190462091,
+        "y": 1.7819415153285176
       },
       "isLocked": false,
       "linkedName": null
@@ -174,12 +174,6 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "StartRoller",
-      "waypointRelativePos": 0,
-      "endWaypointRelativePos": null,
-      "command": null
-    },
-    {
       "name": "IntakeRetract",
       "waypointRelativePos": 0.20107719928186715,
       "endWaypointRelativePos": null,
@@ -188,6 +182,24 @@
     {
       "name": "IntakeExtend",
       "waypointRelativePos": 1.998204667863554,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "StartRoller",
+      "waypointRelativePos": 2.035906642728908,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "StopRoller",
+      "waypointRelativePos": 6.39676840215438,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "AutoAimAndShoot",
+      "waypointRelativePos": 7.0,
       "endWaypointRelativePos": null,
       "command": null
     }

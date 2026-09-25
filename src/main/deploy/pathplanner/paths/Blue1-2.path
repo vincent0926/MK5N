@@ -82,34 +82,7 @@
       "rotationDegrees": -90.0
     }
   ],
-  "constraintZones": [
-    {
-      "name": "intake",
-      "minWaypointRelativePos": 0.0,
-      "maxWaypointRelativePos": 2.15,
-      "constraints": {
-        "maxVelocity": 2.5,
-        "maxAcceleration": 3.0,
-        "maxAngularVelocity": 540.0,
-        "maxAngularAcceleration": 720.0,
-        "nominalVoltage": 12.0,
-        "unlimited": false
-      }
-    },
-    {
-      "name": "go to shoot",
-      "minWaypointRelativePos": 2.15,
-      "maxWaypointRelativePos": 4.0,
-      "constraints": {
-        "maxVelocity": 4.0,
-        "maxAcceleration": 4.0,
-        "maxAngularVelocity": 540.0,
-        "maxAngularAcceleration": 720.0,
-        "nominalVoltage": 12.0,
-        "unlimited": false
-      }
-    }
-  ],
+  "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [
     {
@@ -127,6 +100,12 @@
     {
       "name": "StopRoller",
       "waypointRelativePos": 3.195691202872525,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "AutoAimAndShoot",
+      "waypointRelativePos": 4.0,
       "endWaypointRelativePos": null,
       "command": null
     }

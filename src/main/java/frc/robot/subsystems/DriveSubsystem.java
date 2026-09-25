@@ -85,25 +85,29 @@ public class DriveSubsystem extends SubsystemBase {
       config = null;
     }
 
-    AutoBuilder.configure(
-        this::getPose,
-        this::resetPose,
-        this::getRobotRelativeSpeeds,
-        this::driveRobotRelative,
-        new PPHolonomicDriveController(
-            new PIDConstants(5.0, 0.0, 0.0), // 位移 PID 參數
-            new PIDConstants(5.0, 0.0, 0.0) // 旋轉 PID 參數
-        ),
-        config,
-        () -> {
-          var alliance = DriverStation.getAlliance();
-          if (alliance.isPresent()) {
-            return alliance.get() == DriverStation.Alliance.Red;
-          }
-          return false;
-        },
-        this // 將此子系統作為需求傳入
-    );
+    try {
+      AutoBuilder.configure(
+          this::getPose,
+          this::resetPose,
+          this::getRobotRelativeSpeeds,
+          this::driveRobotRelative,
+          new PPHolonomicDriveController(
+              new PIDConstants(10.0, 0.0, 0.0), // 位移 PID 參數
+              new PIDConstants(7.0, 0.0, 0.0) // 旋轉 PID 參數
+          ),
+          config,
+          () -> {
+            var alliance = DriverStation.getAlliance();
+            if (alliance.isPresent()) {
+              return alliance.get() == DriverStation.Alliance.Red;
+            }
+            return false;
+          },
+          this // 將此子系統作為需求傳入
+      );
+    } catch (Exception e) {
+      DriverStation.reportError("Failed to configure AutoBuilder: " + e.getMessage(), e.getStackTrace());
+    }
 
     // 將 Field2d 發布到 SmartDashboard，供 Elastic 訂閱
     SmartDashboard.putData("Field", m_field);
