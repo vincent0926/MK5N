@@ -60,39 +60,39 @@ public class ReturnBall extends Command {
         timer.reset();
     }
 
-  @Override
-public void execute() {
-    hasValidTarget = vision.canReturnBall();          
-    double distance = vision.getDistanceToTarget();    
+    @Override
+    public void execute() {
+        hasValidTarget = vision.canReturnBall();
+        double distance = vision.getDistanceToTarget();
 
-    if (hasValidTarget) {
-        if (!isAngleLocked) {
-            currentTargetAngle = distancetohood.get(distance);
-            hood.setAngle(currentTargetAngle);
-            isAngleLocked = true; // 拍照鎖死，直到下次重新按按鈕前不再改變
-        }
+        if (hasValidTarget) {
+            if (!isAngleLocked) {
+                currentTargetAngle = distancetohood.get(distance);
+                hood.setAngle(currentTargetAngle);
+                isAngleLocked = true; // 拍照鎖死，直到下次重新按按鈕前不再改變
+            }
 
-        targetRPS = distanceToRPSMap.get(distance);
-        shooter.setRPS(targetRPS); 
+            targetRPS = distanceToRPSMap.get(distance);
+            shooter.setRPS(targetRPS);
 
-        timer.start();
+            timer.start();
 
-        if (timer.get() >= 1.0) {
-            indexer.runindexer();
-            orbit.runorbit();
+            if (timer.get() >= 1.0) {
+                indexer.runindexer();
+                orbit.runorbit();
+            } else {
+                indexer.stop();
+                orbit.stop();
+            }
         } else {
+            timer.stop();
+            timer.reset();
+            shooter.stop();
             indexer.stop();
             orbit.stop();
+            hood.setAngle(0);
         }
-    } else {
-        timer.stop();
-        timer.reset();
-        shooter.stop();
-        indexer.stop();
-        orbit.stop();
     }
-}
-    
 
     // 指令結束時執行：停止所有相關機構
     //
@@ -100,7 +100,7 @@ public void execute() {
 
     @Override
     public void end(boolean interrupted) {
-        // 指令結束時停止底盤、發射器與送球機構
+
         shooter.stop();
         indexer.stop();
         orbit.stop();

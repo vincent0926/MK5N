@@ -218,4 +218,22 @@ public final class Constants {
     };
   }
 
+  //中場回傳球的查表
+  public static class ReturnConstants {
+
+    //中場回傳球的仰角
+    public static final double[][] kReturnBalltohood = {
+        { 1.0, 10 },
+        { 2.0, 15 },
+        { 3.0, 20 }
+    };
+
+    //中場回傳球的RPS
+    public static final double [][] kReturnBalltorps = {
+      {1.0 , 30},
+      {2.0 , 30},
+      {3.0 , 40}
+    };
+  }
+
 }

@@ -48,9 +48,9 @@ public class RobotContainer {
         private final SendableChooser<Command> autoChooser;
 
         public RobotContainer() {
-                // 註冊 PathPlanner Named Commands (必須在 AutoChooser 建立之前註冊)  
+                // 註冊 PathPlanner Named Commands (必須在 AutoChooser 建立之前註冊)
 
-                 NamedCommands.registerCommand("AutoAimAndShoot",
+                NamedCommands.registerCommand("AutoAimAndShoot",
                                 new AutoAimAndShoot(
                                                 visionSubsystem, hoodSubsystem, shooterSubsystem,
                                                 indexerSubsystem, driveSubsystem, orbitSubsystem)
@@ -63,7 +63,6 @@ public class RobotContainer {
                                 Commands.runOnce(() -> rollerIntakeSubsystem.runRollers(), rollerIntakeSubsystem));
                 NamedCommands.registerCommand("StopRoller",
                                 Commands.runOnce(() -> rollerIntakeSubsystem.stop(), rollerIntakeSubsystem));
-                
 
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
                 // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單
@@ -75,8 +74,8 @@ public class RobotContainer {
                                 driveSubsystem.run(() -> {
                                         // 1. 處理移動 (左搖桿)
                                         // 這裡將原本的 y 和 x 加上負號 (反轉)，讓 Shooter 變成車頭
-                                        double y = -MathUtil.applyDeadband(driverController.getLeftY()*0.9, 0.06);
-                                        double x = -MathUtil.applyDeadband(driverController.getLeftX()*0.9, 0.06);
+                                        double y = -MathUtil.applyDeadband(driverController.getLeftY() * 0.9, 0.06);
+                                        double x = -MathUtil.applyDeadband(driverController.getLeftX() * 0.9, 0.06);
 
                                         // 2. 處理旋轉 (扳機鍵：右扳機 - 左扳機)
                                         // 假設：按下右扳機 -> 右轉，按下左扳機 -> 左轉
@@ -101,7 +100,19 @@ public class RobotContainer {
 
         private void configureBindings() {
 
-                // 綁定 A 鍵：啟動回傳球 (按一下啟動，再按一下停止)
+                // 綁定 A 鍵：依據 Limelight4 條件判斷是否執行回傳球，否則執行全自動瞄準與發射
+                // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷指令
+                driverController.a().toggleOnTrue(
+                                new AutoAimAndShoot(
+                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
+                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
+                                                .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
+                                                                Math.abs(driverController.getLeftX()) > 0.1 ||
+                                                                Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||
+                                                                Math.abs(driverController
+                                                                                .getRightTriggerAxis()) > 0.1));
+
+                //回傳球
                 driverController.a().toggleOnTrue(
                                 new ReturnBall(
                                                 limelight4Subsystem, hoodSubsystem, shooterSubsystem,
