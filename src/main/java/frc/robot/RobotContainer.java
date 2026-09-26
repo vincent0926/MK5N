@@ -105,7 +105,7 @@ public class RobotContainer {
                 // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷指令
                 driverController.a().toggleOnTrue(
                                 new ConditionalCommand(
-                                                new ReturnBall(limelight4Subsystem),
+                                                new ReturnBall(limelight4Subsystem, shooterSubsystem, hoodSubsystem, indexerSubsystem),
                                                 new AutoAimAndShoot(
                                                                 visionSubsystem, hoodSubsystem, shooterSubsystem,
                                                                 indexerSubsystem, driveSubsystem, orbitSubsystem),
