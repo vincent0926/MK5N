@@ -7,10 +7,13 @@ import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.HoodSubsystem;
 import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.Limelight4Subsystem;
 import frc.robot.subsystems.OrbitSubsystem;
 import frc.robot.subsystems.RollerIntakeSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.commands.ReturnBall;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 
 import java.util.List;
 
@@ -41,11 +44,17 @@ public class RobotContainer {
         private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
         private final RollerIntakeSubsystem rollerIntakeSubsystem = new RollerIntakeSubsystem();
         private final VisionSubsystem visionSubsystem = new VisionSubsystem();
+        private final Limelight4Subsystem limelight4Subsystem = new Limelight4Subsystem();
         private final SendableChooser<Command> autoChooser;
 
         public RobotContainer() {
                 // 註冊 PathPlanner Named Commands (必須在 AutoChooser 建立之前註冊)  
 
+                 NamedCommands.registerCommand("AutoAimAndShoot",
+                                new AutoAimAndShoot(
+                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
+                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
+                                                .withTimeout(5.0));
                 NamedCommands.registerCommand("IntakeExtend",
                                 Commands.runOnce(() -> intakeSubsystem.extend(), intakeSubsystem));
                 NamedCommands.registerCommand("IntakeRetract",
@@ -54,16 +63,12 @@ public class RobotContainer {
                                 Commands.runOnce(() -> rollerIntakeSubsystem.runRollers(), rollerIntakeSubsystem));
                 NamedCommands.registerCommand("StopRoller",
                                 Commands.runOnce(() -> rollerIntakeSubsystem.stop(), rollerIntakeSubsystem));
-                NamedCommands.registerCommand("AutoAimAndShoot",
-                                new AutoAimAndShoot(visionSubsystem, hoodSubsystem, shooterSubsystem, indexerSubsystem, driveSubsystem, orbitSubsystem).withTimeout(3.0));
-                NamedCommands.registerCommand("shoot",
-                                new AutoAimAndShoot(visionSubsystem, hoodSubsystem, shooterSubsystem, indexerSubsystem, driveSubsystem, orbitSubsystem).withTimeout(3.0));
                 
 
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
                 // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單
-                autoChooser = AutoBuilder.buildAutoChooser("Blue3");
-                SmartDashboard.putData("Auto Chooser", autoChooser);
+                autoChooser = AutoBuilder.buildAutoChooser();
+                SmartDashboard.putData("Blue3", autoChooser);
 
                 // 設定底盤預設指令 (搖桿控制)
                 driveSubsystem.setDefaultCommand(
@@ -96,12 +101,15 @@ public class RobotContainer {
 
         private void configureBindings() {
 
-                // 綁定 A 鍵：全自動瞄準與發射 (按一下啟動，再按一下停止)
-                // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷 A 鍵指令
+                // 綁定 A 鍵：依據 Limelight4 條件判斷是否執行回傳球，否則執行全自動瞄準與發射
+                // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷指令
                 driverController.a().toggleOnTrue(
-                                new AutoAimAndShoot(
-                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
-                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
+                                new ConditionalCommand(
+                                                new ReturnBall(limelight4Subsystem),
+                                                new AutoAimAndShoot(
+                                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
+                                                                indexerSubsystem, driveSubsystem, orbitSubsystem),
+                                                () -> limelight4Subsystem.canReturnBall())
                                                 .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
                                                                 Math.abs(driverController.getLeftX()) > 0.1 ||
                                                                 Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||

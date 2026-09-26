@@ -16,10 +16,10 @@ public final class Constants {
 
     public static final double kTrackWidth = edu.wpi.first.math.util.Units.inchesToMeters(22.75);// 左到右 距離
     public static final double kWheelBase = edu.wpi.first.math.util.Units.inchesToMeters(20.75);// 前到後 距輪
-    public static final double kDriveGearRatio = 4.71; // L3 驅動齒比
+    public static final double kDriveGearRatio = 5.27; // L3 驅動齒比
     public static final double kSteerGearRatio = 287.0 / 11.0;// 轉向齒比
-    public static final double kMaxSpeed = 4;// 最大速度
-    public static final double turnSpeed = 1;
+    public static final double kMaxSpeed = 6.06;// 最大速度
+    public static final double turnSpeed = 3;
     public static final InvertedValue kFLDriveInverted = InvertedValue.CounterClockwise_Positive;
     public static final InvertedValue kBLDriveInverted = InvertedValue.CounterClockwise_Positive;
     public static final InvertedValue kFRDriveInverted = InvertedValue.Clockwise_Positive;
