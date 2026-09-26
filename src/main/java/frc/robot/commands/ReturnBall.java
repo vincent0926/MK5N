@@ -3,12 +3,13 @@ package frc.robot.commands;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants.AimConstants;
+import frc.robot.Constants.ReturnConstants;
 import frc.robot.subsystems.HoodSubsystem;
 import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.Limelight4Subsystem;
 import frc.robot.subsystems.OrbitSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.VisionSubsystem;
 
 public class ReturnBall extends Command {
 
@@ -39,10 +40,10 @@ public class ReturnBall extends Command {
 
         addRequirements(hood, shooter, indexer, orbit);
 
-        for (double[] point : AimConstants.kDistanceToAngleMap) {
+        for (double[] point : ReturnConstants.kReturnBalltohood) {
             distancetohood.put(point[0], point[1]);
         }
-        for (double[] point : AimConstants.kDistanceToRPSMap) {
+        for (double[] point : ReturnConstants.kReturnBalltorps) {
             distanceToRPSMap.put(point[0], point[1]);
         }
 
