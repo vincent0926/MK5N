@@ -1,79 +1,122 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.AimConstants;
 import frc.robot.subsystems.HoodSubsystem;
 import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.Limelight4Subsystem;
+import frc.robot.subsystems.OrbitSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 
 public class ReturnBall extends Command {
-    private final Limelight4Subsystem limelight4Subsystem;
-    private final ShooterSubsystem shooterSubsystem;
-    private final HoodSubsystem hoodSubsystem;
-    private final IndexerSubsystem indexerSubsystem;
 
-    private final InterpolatingDoubleTreeMap distanceToAngleMap = new InterpolatingDoubleTreeMap();
+    private final Limelight4Subsystem vision;
+    private final HoodSubsystem hood;
+    private final ShooterSubsystem shooter;
+    private final IndexerSubsystem indexer;
+    private final OrbitSubsystem orbit;
+
+    private final Timer timer = new Timer();
+
+    private final InterpolatingDoubleTreeMap distancetohood = new InterpolatingDoubleTreeMap();
     private final InterpolatingDoubleTreeMap distanceToRPSMap = new InterpolatingDoubleTreeMap();
 
-    public ReturnBall(Limelight4Subsystem limelight4Subsystem, ShooterSubsystem shooterSubsystem, HoodSubsystem hoodSubsystem, IndexerSubsystem indexerSubsystem) {
-        this.limelight4Subsystem = limelight4Subsystem;
-        this.shooterSubsystem = shooterSubsystem;
-        this.hoodSubsystem = hoodSubsystem;
-        this.indexerSubsystem = indexerSubsystem;
+    private double targetRPS = 0.0;
+    private boolean hasValidTarget = false;
+    private double currentTargetAngle = -1.0;
+    private boolean isAngleLocked = false;
 
-        addRequirements(limelight4Subsystem, shooterSubsystem, hoodSubsystem, indexerSubsystem);
+    public ReturnBall(Limelight4Subsystem vision, HoodSubsystem hood, ShooterSubsystem shooter,
+            IndexerSubsystem indexer,
+            OrbitSubsystem orbit) {
+        this.vision = vision;
+        this.hood = hood;
+        this.shooter = shooter;
+        this.indexer = indexer;
+        this.orbit = orbit;
 
-        // 讀取設定檔中的距離對應角度/轉速表
+        addRequirements(hood, shooter, indexer, orbit);
+
         for (double[] point : AimConstants.kDistanceToAngleMap) {
-            distanceToAngleMap.put(point[0], point[1]);
+            distancetohood.put(point[0], point[1]);
         }
         for (double[] point : AimConstants.kDistanceToRPSMap) {
             distanceToRPSMap.put(point[0], point[1]);
         }
+
     }
 
     @Override
     public void initialize() {
-        System.out.println("ReturnBall Command Started");
+        hasValidTarget = false;
+        targetRPS = 0.0;
+        currentTargetAngle = -1.0;
+        isAngleLocked = false;
+
+        timer.stop();
+        timer.reset();
     }
 
-    @Override
-    public void execute() {
-        double distance = limelight4Subsystem.getDistanceToTarget();
+  @Override
+public void execute() {
+    hasValidTarget = vision.canReturnBall();          
+    double distance = vision.getDistanceToTarget();    
 
-        if (distance > 0) {
-            // 透過查表內插法取得目標仰角與目標轉速
-            double targetAngle = distanceToAngleMap.get(distance);
-            double targetRPS = distanceToRPSMap.get(distance);
-
-            // 設置機構
-            hoodSubsystem.setAngle(targetAngle);
-            shooterSubsystem.setRPS(targetRPS);
-
-            // 當馬達達到目標轉速，且 Hood 到達目標角度時，啟動 indexer 輸彈
-            if (shooterSubsystem.isAtSpeed(targetRPS) && hoodSubsystem.isAtAngle()) {
-                indexerSubsystem.runindexer();
-            } else {
-                indexerSubsystem.stop();
-            }
-        } else {
-            // 如果沒看到距離 (或算不出來)，停止射擊與進件機構，確保安全
-            shooterSubsystem.stop();
-            indexerSubsystem.stop();
+    if (hasValidTarget) {
+        if (!isAngleLocked) {
+            currentTargetAngle = distancetohood.get(distance);
+            hood.setAngle(currentTargetAngle);
+            isAngleLocked = true; // 拍照鎖死，直到下次重新按按鈕前不再改變
         }
+
+        targetRPS = distanceToRPSMap.get(distance);
+        shooter.setRPS(targetRPS); 
+
+        timer.start();
+
+        if (timer.get() >= 1.0) {
+            indexer.runindexer();
+            orbit.runorbit();
+        } else {
+            indexer.stop();
+            orbit.stop();
+        }
+    } else {
+        timer.stop();
+        timer.reset();
+        shooter.stop();
+        indexer.stop();
+        orbit.stop();
     }
+}
+    
+
+    // 指令結束時執行：停止所有相關機構
+    //
+    // @param interrupted 指令是否被中斷
 
     @Override
     public void end(boolean interrupted) {
-        System.out.println("ReturnBall Command Ended");
-        shooterSubsystem.stop();
-        indexerSubsystem.stop();
+        // 指令結束時停止底盤、發射器與送球機構
+        shooter.stop();
+        indexer.stop();
+        orbit.stop();
+
+        // 重置並停止計時器
+        timer.stop();
+        timer.reset();
+
+        // 指令結束（放開 A 鍵）時，把它歸零
+        hood.setAngle(0);
+
+        currentTargetAngle = -1.0;
     }
 
+    // 檢查指令是否完成
     @Override
     public boolean isFinished() {
-        return false; // 持續執行，直到玩家放開按鍵或觸發中斷條件
+        return false;
     }
 }
