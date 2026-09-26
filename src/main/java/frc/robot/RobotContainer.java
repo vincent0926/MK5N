@@ -101,20 +101,11 @@ public class RobotContainer {
 
         private void configureBindings() {
 
-                // 綁定 A 鍵：依據 Limelight4 條件判斷是否執行回傳球，否則執行全自動瞄準與發射
-                // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷指令
+                // 綁定 A 鍵：啟動回傳球 (按一下啟動，再按一下停止)
                 driverController.a().toggleOnTrue(
-                                new ConditionalCommand(
-                                                new ReturnBall(limelight4Subsystem, hoodSubsystem, shooterSubsystem, indexerSubsystem, orbitSubsystem),
-                                                new AutoAimAndShoot(
-                                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
-                                                                indexerSubsystem, driveSubsystem, orbitSubsystem),
-                                                () -> limelight4Subsystem.canReturnBall())
-                                                .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
-                                                                Math.abs(driverController.getLeftX()) > 0.1 ||
-                                                                Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||
-                                                                Math.abs(driverController
-                                                                                .getRightTriggerAxis()) > 0.1));
+                                new ReturnBall(
+                                                limelight4Subsystem, hoodSubsystem, shooterSubsystem,
+                                                indexerSubsystem, orbitSubsystem));
 
                 // 綁定 Y 鍵：啟動/停止滾輪進件機構 (Roller Intake)
                 driverController.y().toggleOnTrue(
