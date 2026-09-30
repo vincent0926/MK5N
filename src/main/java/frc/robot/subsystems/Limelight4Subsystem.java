@@ -17,7 +17,7 @@ public class Limelight4Subsystem extends SubsystemBase {
     // 取得 Limelight 4 的 NetworkTable 參照
     // "limelight" 是這顆 Limelight 在網頁介面中設定的名稱
     // 所有 Limelight 的數據（目標 ID、是否有目標、機器人姿態等）都會透過這個 table 存取
-    private final NetworkTable limelight4Table = NetworkTableInstance.getDefault().getTable("limelight");
+    private final NetworkTable limelight4Table = NetworkTableInstance.getDefault().getTable("limelight-up");
 
     // WPILib 提供的 AprilTag 場地佈局資料
     // 包含本賽季所有 AprilTag 的 ID 以及它們在場地上的精確 3D 座標

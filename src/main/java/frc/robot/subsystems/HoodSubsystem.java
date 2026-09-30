@@ -46,10 +46,12 @@ public class HoodSubsystem extends SubsystemBase {
         hoodconfig.Slot0.kD = HoodConstants.khoodkD;
         hoodconfig.Slot0.kS = HoodConstants.khoodkS;
         hoodconfig.Slot0.kG = HoodConstants.khoodkG;
+        
+        hoodconfig.MotionMagic.MotionMagicJerk = 20.0; // 單位: RPS/s²
 
         // 設定 Motion Magic 參數 (巡航速度與加速度)
-        hoodconfig.MotionMagic.MotionMagicCruiseVelocity = 0.5; // 0.5 RPS = 180 degrees/sec (每秒 180 度)
-        hoodconfig.MotionMagic.MotionMagicAcceleration = 1.0; // 1.0 RPS/s = 360 degrees/sec^2 (每秒平方 360 度)
+        hoodconfig.MotionMagic.MotionMagicCruiseVelocity = 2.0; // 0.5 RPS = 180 degrees/sec (每秒 180 度)
+        hoodconfig.MotionMagic.MotionMagicAcceleration = 4.0; // 1.0 RPS/s = 360 degrees/sec^2 (每秒平方 360 度)
         hoodconfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         // 應用配置並設定為煞車模式

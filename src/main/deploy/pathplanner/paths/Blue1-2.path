@@ -102,12 +102,6 @@
       "waypointRelativePos": 3.195691202872525,
       "endWaypointRelativePos": null,
       "command": null
-    },
-    {
-      "name": "AutoAimAndShoot",
-      "waypointRelativePos": 4.0,
-      "endWaypointRelativePos": null,
-      "command": null
     }
   ],
   "globalConstraints": {

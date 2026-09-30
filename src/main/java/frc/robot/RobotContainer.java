@@ -66,7 +66,7 @@ public class RobotContainer {
 
                 // 建立 PathPlanner Auto Chooser 並發布到 SmartDashboard
                 // AutoBuilder.configure() 已在 DriveSubsystem 建構子中完成，這裡只需建立選單
-                autoChooser = AutoBuilder.buildAutoChooser();
+                autoChooser = AutoBuilder.buildAutoChooser("Blue3");
                 SmartDashboard.putData("Blue3", autoChooser);
 
                 // 設定底盤預設指令 (搖桿控制)
@@ -102,21 +102,21 @@ public class RobotContainer {
 
                 // 綁定 A 鍵：依據 Limelight4 條件判斷是否執行回傳球，否則執行全自動瞄準與發射
                 // 並加上 `.until()`，只要使用者去推動左搖桿或左右扳機鍵，就會自動中斷指令
+                // 回傳球
                 driverController.a().toggleOnTrue(
-                                new AutoAimAndShoot(
-                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
-                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
-                                                .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
-                                                                Math.abs(driverController.getLeftX()) > 0.1 ||
-                                                                Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||
-                                                                Math.abs(driverController
-                                                                                .getRightTriggerAxis()) > 0.1));
-
-                //回傳球
-                driverController.a().toggleOnTrue(
-                                new ReturnBall(
-                                                limelight4Subsystem, hoodSubsystem, shooterSubsystem,
-                                                indexerSubsystem, orbitSubsystem));
+                                new ConditionalCommand(
+                                                new ReturnBall(
+                                                                limelight4Subsystem, hoodSubsystem, shooterSubsystem,
+                                                                indexerSubsystem, orbitSubsystem),
+                                                new AutoAimAndShoot(
+                                                                visionSubsystem, hoodSubsystem, shooterSubsystem,
+                                                                indexerSubsystem, driveSubsystem, orbitSubsystem)
+                                                                .until(() -> Math.abs(driverController.getLeftY()) > 0.1 ||
+                                                                                Math.abs(driverController.getLeftX()) > 0.1 ||
+                                                                                Math.abs(driverController.getLeftTriggerAxis()) > 0.1 ||
+                                                                                Math.abs(driverController
+                                                                                                .getRightTriggerAxis()) > 0.1),
+                                                () -> limelight4Subsystem.canReturnBall()));
 
                 // 綁定 Y 鍵：啟動/停止滾輪進件機構 (Roller Intake)
                 driverController.y().toggleOnTrue(
