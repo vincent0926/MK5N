@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Blue1-1"
+            "pathName": "Blue3-1"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Blue1-2"
+            "pathName": "Blue3-2"
           }
         },
         {
@@ -25,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Blue1-3"
+            "pathName": "Blue3-3"
           }
         },
         {
@@ -38,6 +38,6 @@
     }
   },
   "resetOdom": true,
-  "folder": null,
+  "folder": "Blue",
   "choreoAuto": false
 }

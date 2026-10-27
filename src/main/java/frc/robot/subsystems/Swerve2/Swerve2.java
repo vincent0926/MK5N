@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.Swerve2;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -9,16 +9,13 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.SwerveConstants;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.config.PIDConstants;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.math.geometry.Twist2d;
 
@@ -26,15 +23,15 @@ import edu.wpi.first.math.geometry.Twist2d;
  * 底盤子系統 (DriveSubsystem)
  * 負責控制機器的 Swerve (萬向) 底盤，包含四個模組與陀螺儀，並處理里程計與路徑規劃。
  */
-public class DriveSubsystem extends SubsystemBase {
+public class Swerve2 extends SubsystemBase {
   /** 左前 Swerve 模組 */
-  private final SwerveModule frontLeft;
+  private final SwerveModule2 frontLeft;
   /** 右前 Swerve 模組 */
-  private final SwerveModule frontRight;
+  private final SwerveModule2 frontRight;
   /** 左後 Swerve 模組 */
-  private final SwerveModule backLeft;
+  private final SwerveModule2 backLeft;
   /** 右後 Swerve 模組 */
-  private final SwerveModule backRight;
+  private final SwerveModule2 backRight;
 
   /** Pigeon2 陀螺儀 */
   private final Pigeon2 pigeon;
@@ -49,21 +46,34 @@ public class DriveSubsystem extends SubsystemBase {
   // Elastic Field2d：讓 Dashboard 能顯示機器人在場地上的即時位置
   private final Field2d m_field = new Field2d();
 
+  // 定向保持 (Heading Hold)：沒有手動轉向輸入時，鎖定目前朝向、避免平移時慢慢轉掉
+  private final PIDController headingController = new PIDController(SwerveConstants.kHeadingHoldP, 0, 0);
+  private boolean headingLocked = false;
+  private double headingHoldTargetRad = 0.0;
+
+  // 駕駛用的場地導向朝向偏移。不用 pigeon.reset()：陀螺儀和 Swerve 共用，reset 會讓 Swerve 的朝向跳掉
+  private Rotation2d driverHeadingOffset = new Rotation2d();
+
+  // 平移加速度限制 (Slew Rate)：避免搖桿瞬間拉滿造成打滑
+  private final SlewRateLimiter xLimiter = new SlewRateLimiter(SwerveConstants.kMaxAccel);
+  private final SlewRateLimiter yLimiter = new SlewRateLimiter(SwerveConstants.kMaxAccel);
+
   /**
    * 底盤子系統建構子
-   * 初始化所有 Swerve 模組、陀螺儀、姿態估測器及 PathPlanner 的 AutoBuilder。
+   * 初始化所有 Swerve 模組、陀螺儀及姿態估測器 (AutoBuilder 由 Swerve 設定)。
    */
-  public DriveSubsystem() {
+  public Swerve2() {
     // 把四個輪子通通 new 出來 (初始化四個 Swerve 模組)
-    frontLeft = new SwerveModule(0, SwerveConstants.kFLDriveId, SwerveConstants.kFLSteerId,
+    frontLeft = new SwerveModule2(0, SwerveConstants.kFLDriveId, SwerveConstants.kFLSteerId,
         SwerveConstants.kFLEncoderId, SwerveConstants.kFLOffset, SwerveConstants.kFLDriveInverted);
-    frontRight = new SwerveModule(1, SwerveConstants.kFRDriveId, SwerveConstants.kFRSteerId,
+    frontRight = new SwerveModule2(1, SwerveConstants.kFRDriveId, SwerveConstants.kFRSteerId,
         SwerveConstants.kFREncoderId, SwerveConstants.kFROffset, SwerveConstants.kFRDriveInverted);
-    backLeft = new SwerveModule(2, SwerveConstants.kBLDriveId, SwerveConstants.kBLSteerId, SwerveConstants.kBLEncoderId,
+    backLeft = new SwerveModule2(2, SwerveConstants.kBLDriveId, SwerveConstants.kBLSteerId, SwerveConstants.kBLEncoderId,
         SwerveConstants.kBLOffset, SwerveConstants.kBLDriveInverted);
-    backRight = new SwerveModule(3, SwerveConstants.kBRDriveId, SwerveConstants.kBRSteerId,
+    backRight = new SwerveModule2(3, SwerveConstants.kBRDriveId, SwerveConstants.kBRSteerId,
         SwerveConstants.kBREncoderId, SwerveConstants.kBROffset, SwerveConstants.kBRDriveInverted);
     pigeon = new Pigeon2(11);
+    headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     poseEstimator = new SwerveDrivePoseEstimator(
         SwerveConstants.kDriveKinematics,
@@ -76,41 +86,11 @@ public class DriveSubsystem extends SubsystemBase {
         },
         new Pose2d());
 
-    // PathPlanner 2025/2026 AutoBuilder Configuration
-    RobotConfig config;
-    try {
-      config = RobotConfig.fromGUISettings();
-    } catch (Exception e) {
-      e.printStackTrace();
-      config = null;
-    }
-
-    try {
-      AutoBuilder.configure(
-          this::getPose,
-          this::resetPose,
-          this::getRobotRelativeSpeeds,
-          this::driveRobotRelative,
-          new PPHolonomicDriveController(
-              new PIDConstants(10.0, 0.0, 0.0), // 位移 PID 參數
-              new PIDConstants(7.0, 0.0, 0.0) // 旋轉 PID 參數
-          ),
-          config,
-          () -> {
-            var alliance = DriverStation.getAlliance();
-            if (alliance.isPresent()) {
-              return alliance.get() == DriverStation.Alliance.Red;
-            }
-            return false;
-          },
-          this // 將此子系統作為需求傳入
-      );
-    } catch (Exception e) {
-      DriverStation.reportError("Failed to configure AutoBuilder: " + e.getMessage(), e.getStackTrace());
-    }
+    // 自動模式由新的 Swerve 負責 (它的建構子呼叫 AutoBuilder.configure)。
+    // 這裡不能再 configure，否則後建立的 Swerve2 會蓋掉設定，自動路線變成由 Swerve2 執行。
 
     // 將 Field2d 發布到 SmartDashboard，供 Elastic 訂閱
-    SmartDashboard.putData("Field", m_field);
+    SmartDashboard.putData("Swerve2Field", m_field); // "Field" 留給 Swerve (自動路線與視覺用的位姿)
   }
 
   /**
@@ -126,7 +106,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     // 根據是否相對於場地來計算底盤速度
     if (fieldRelative) {
-      chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon.getRotation2d());
+      chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, getDriverHeading());
     } else {
       chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, rot);
     }
@@ -148,6 +128,40 @@ public class DriveSubsystem extends SubsystemBase {
     frontRight.setDesiredState(moduleStates[1]);
     backLeft.setDesiredState(moduleStates[2]);
     backRight.setDesiredState(moduleStates[3]);
+  }
+
+  /**
+   * 搖桿手動駕駛專用：平移加速度限制 (Slew Rate) + 定向保持 (Heading Hold)。
+   * 當沒有手動轉向輸入時自動鎖定目前朝向，避免平移時機器人慢慢被轉掉；
+   * 一旦有轉向輸入，立刻解除鎖定並採用手動旋轉速度。
+   *
+   * @param xSpeed        X 軸方向的速度 (前進/後退)
+   * @param ySpeed        Y 軸方向的速度 (左移/右移)
+   * @param rot           旋轉角速度；在定向保持生效時會被忽略並改用 PID 輸出
+   * @param fieldRelative 是否為相對於場地的控制模式
+   */
+  public void driveWithHeadingHold(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+    xSpeed = xLimiter.calculate(xSpeed);
+    ySpeed = yLimiter.calculate(ySpeed);
+
+    double headingRad = getRotation2d().getRadians();
+
+    if (Math.abs(rot) > SwerveConstants.kHeadingHoldOmegaDeadband) {
+      headingLocked = false;
+      headingHoldTargetRad = headingRad;
+    } else if (xSpeed != 0.0 || ySpeed != 0.0) {
+      if (!headingLocked) {
+        headingLocked = true;
+        headingHoldTargetRad = headingRad;
+      }
+      rot = headingController.calculate(headingRad, headingHoldTargetRad);
+    } else {
+      headingLocked = false;
+      headingHoldTargetRad = headingRad;
+      rot = 0.0;
+    }
+
+    drive(xSpeed, ySpeed, rot, fieldRelative);
   }
 
   @Override
@@ -265,6 +279,16 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public Rotation2d getRotation2d() {
     return pigeon.getRotation2d();
+  }
+
+  /** 駕駛用的場地導向朝向 (陀螺儀角度減掉 resetDriverHeading 記下的偏移)。 */
+  public Rotation2d getDriverHeading() {
+    return pigeon.getRotation2d().minus(driverHeadingOffset);
+  }
+
+  /** 把目前車頭方向設為駕駛的「前方」，不動陀螺儀，所以不影響 Swerve 的位姿。 */
+  public void resetDriverHeading() {
+    driverHeadingOffset = pigeon.getRotation2d();
   }
 
   /**

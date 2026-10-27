@@ -25,6 +25,9 @@ public class Robot extends TimedRobot {
     // 啟動 WPILib 內建的資料紀錄器 (.wpilog)
     DataLogManager.start();
 
+    // 部署確認：Dashboard 看得到這個字串，才代表機器人跑的是這份程式 (改程式時順便改日期)
+    edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Code/Version", "2026-10-22 spin-debug");
+
     // 實例化我們的 RobotContainer
     m_robotContainer = new RobotContainer();
   }
@@ -38,7 +41,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 
     // 注意：請確認你的 RobotContainer.java 中確實有定義 periodic() 方法，否則請註解掉下方一行
-    //m_robotContainer.periodic();
+    m_robotContainer.periodic();
   }
 
   /** 每次機器人進入禁用 (Disabled) 模式時，此函式會被呼叫一次。 */
@@ -91,6 +94,9 @@ public class Robot extends TimedRobot {
     } catch (Exception e) {
       System.err.println("[Robot] retractIntake() 執行失敗: " + e.getMessage());
     }
+
+    // 紅方跑完自動後朝向約 180°，不重設前方的話搖桿往前會朝駕駛衝過來
+    m_robotContainer.alignDriverHeadingToAlliance();
   }
 
   /** 此函式會在操作員控制 (遙控) 期間週期性地被呼叫。 */

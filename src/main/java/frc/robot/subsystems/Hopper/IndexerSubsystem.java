@@ -1,49 +1,48 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.Hopper;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.IndexerConstants;
 
 public class IndexerSubsystem extends SubsystemBase {
 
     private final TalonFX indexerMotor = new TalonFX(IndexerConstants.kindexerId);
-    private final VoltageOut indexerVoltageOut = new VoltageOut(0);
-
-    private double targetIndexerVoltage = 0.0;
+    private final VelocityVoltage indexerVelocityVoltage = new VelocityVoltage(0);
+    // 目標轉速 (馬達軸 RPS，沒有設 SensorToMechanismRatio)
+    private double targetIndexerRPS = 0.0;
 
     public IndexerSubsystem() {
         TalonFXConfiguration config = new TalonFXConfiguration();
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-        
-        // 電流限制：關閉 Stator 電流限制，避免馬達啟動扭力不足被限制
+        // Brake：停止時立刻停住，避免球靠慣性繼續被送進飛輪
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.Slot0.kP = IndexerConstants.kindexerkP;
+        config.Slot0.kS = IndexerConstants.kindexerkS;
+        config.Slot0.kV = IndexerConstants.kindexerkV;
+        // 電流限制：Supply 保護電池；Stator 限制扭力 (太低時速度環會追不上目標)
         config.CurrentLimits.SupplyCurrentLimit = IndexerConstants.kIndexerSupplyCurrentLimit;
         config.CurrentLimits.SupplyCurrentLimitEnable = IndexerConstants.kIndexerSupplyCurrentLimitEnable;
-        config.CurrentLimits.StatorCurrentLimit = 20;
+        config.CurrentLimits.StatorCurrentLimit = IndexerConstants.kIndexerStatorCurrentLimit;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
-        
-        // 確保軟體軟極限 (Soft Limit) 關閉，避免硬體暫存舊數據擋住輸出
-        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-        config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
-        
+
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         indexerMotor.getConfigurator().apply(config);
     }
 
+    // 指令的 execute() 會每 20 ms 呼叫，所以這裡只設目標、不印訊息；狀態看 SmartDashboard
     public void runindexer() {
-        targetIndexerVoltage = IndexerConstants.kindexerVoltage;
-        System.out.println("[Indexer] RUN Command Executed! Target Voltage: " + targetIndexerVoltage);
+        targetIndexerRPS = IndexerConstants.kindexerRPS;
     }
 
     public void stop() {
-        targetIndexerVoltage = 0.0;
-        System.out.println("[Indexer] STOP Command Executed!");
+        targetIndexerRPS = 0.0;
     }
 
     public boolean isConnected() {
@@ -52,9 +51,10 @@ public class IndexerSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        indexerMotor.setControl(indexerVoltageOut.withOutput(targetIndexerVoltage));
-        
-        SmartDashboard.putNumber("Indexer/Target Voltage", targetIndexerVoltage);
+        indexerMotor.setControl(indexerVelocityVoltage.withVelocity(targetIndexerRPS));
+
+        SmartDashboard.putNumber("Indexer/Target RPS", targetIndexerRPS);
+        SmartDashboard.putNumber("Indexer/Velocity RPS", indexerMotor.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Indexer/Stator Current", indexerMotor.getStatorCurrent().getValueAsDouble());
         SmartDashboard.putBoolean("Indexer/Connected", isConnected());
     }

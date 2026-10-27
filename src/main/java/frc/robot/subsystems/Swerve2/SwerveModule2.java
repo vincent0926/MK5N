@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.Swerve2;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -15,7 +15,7 @@ import frc.robot.Constants.SwerveConstants;
 /**
  * 負責單一獨立 Swerve 模組（包含驅動馬達、轉向馬達與絕對值編碼器）的控制與狀態讀取。
  */
-public class SwerveModule {
+public class SwerveModule2 {
     /** 模組的編號（通常為 0-3 代表四個輪子） */
     private final int ModuleIndex;
     /** 負責控制輪子前進後退的驅動馬達 */
@@ -25,10 +25,12 @@ public class SwerveModule {
     /** 用於讀取輪子絕對角度的 CANcoder 絕對值編碼器 */
     private final CANcoder AbsoluteEncoder;
 
+    // 馬達和 Swerve 共用：Swerve 用 Slot0，Swerve2 用 Slot1 (見 SwerveModuleConfigurator2)。
+    // UpdateFreqHz = 0：只送一次、不在背景重送，否則 Swerve 接手時舊指令會一直和它搶馬達。
     // 建立驅動馬達的控制指令物件：使用「速度與電壓」閉迴路控制 (預設目標為 0)
-    private final VelocityVoltage driveVelocity = new VelocityVoltage(0);
+    private final VelocityVoltage driveVelocity = new VelocityVoltage(0).withSlot(1).withUpdateFreqHz(0);
     // 建立轉向馬達的控制指令物件：使用「位置與電壓」閉迴路控制 (預設目標為 0)
-    private final PositionVoltage steerPosition = new PositionVoltage(0);
+    private final PositionVoltage steerPosition = new PositionVoltage(0).withSlot(1).withUpdateFreqHz(0);
 
     // 紀錄最後一次的目標角度，避免機器人靜止時，搖桿回正導致輪子自動轉回 0 度而產生抖動
     private Rotation2d mLastAngle;
@@ -43,7 +45,7 @@ public class SwerveModule {
      * @param offsetRotations 絕對角度偏移量 (以圈數為單位)
      * @param driveInverted   驅動馬達是否反轉
      */
-    public SwerveModule(int index, int driveId, int steerId, int encoderId, double offsetRotations, InvertedValue driveInverted) {
+    public SwerveModule2(int index, int driveId, int steerId, int encoderId, double offsetRotations, InvertedValue driveInverted) {
 
         // 將傳入的模組編號存入類別變數
         this.ModuleIndex = index;
@@ -54,7 +56,7 @@ public class SwerveModule {
         // 根據傳入的 CAN ID 實例化編碼器
         this.AbsoluteEncoder = new CANcoder(encoderId);
         // 呼叫我們之前寫好的 Configurator 類別，把上面實例化的硬體傳進去進行 PID 與電流限制等基礎配置
-        SwerveModuleConfigurator.configure(DriveMotor, SteerMotor, AbsoluteEncoder, offsetRotations,driveInverted );
+        SwerveModuleConfigurator2.configure(DriveMotor, SteerMotor, AbsoluteEncoder, offsetRotations,driveInverted );
         // 初始化最後一次的角度：讀取轉向馬達當下的位置 (以圈數 Rotations 為單位) 並轉換為 Rotation2d 物件
         this.mLastAngle = Rotation2d.fromRotations(SteerMotor.getPosition().getValueAsDouble());
 
